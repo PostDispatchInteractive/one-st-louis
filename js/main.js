@@ -12,7 +12,6 @@
 	selected, 
 	mergedSelected, 
 	merges, 
-	deletes, 
 	active, 
 	munis, 
 	stats;
@@ -69,14 +68,14 @@
 
 		selected = [];
 		merges = [];
-		deletes = [];
 
 		active = d3.select(null);
 		munis;
 
 
 		// Load the map's geopgraphy into D3
-		d3.json("data/municipalities.topojson", function(error, data) {
+		//d3.json("data/municipalities.topojson", function(error, data) {
+		d3.json("data/st-louis-city-county-unincorporated-simplified.topojson", function(error, data) {
 
 			// clone and store the data in a global variable so we can access it later
 			munis = jQuery.extend(true, {}, data);
@@ -98,7 +97,6 @@
 			// END
 			// ========================================================
 
-
 			// Load the demographic/income data.
 			// Once loaded, store a copy in global Stats variable, then call the BuildMap function
 			$.when( 
@@ -116,13 +114,13 @@
 		});
 
 
-		// Map control click handlers
+		// MAP CONTROL CLICK HANDLERS
+		// Merge button
 		$("#map-merge").on("click", function() {
 			// Pop up box to ask user to name their new merged muni
 			var bPopup = $('#merge-name-popup').bPopup({
 				// After they submit the form 
 				onClose: function() {
-					console.log('FIRING!');
 					// Store user's submitted name
 					var newName = $('#merge-name-popup input').val();
 					// If they didn't submit anything, use generic label
@@ -160,9 +158,37 @@
 
 		}); // end map-merge click handler 
 
+		// Disincorporate button
 		$("#map-delete").on("click", function() {
-			for (var i=0; i<selected.length; i++) {
-				deletes.push( $(selected[i]).attr('data-placefp') );
+			// check if there is an unincorporated mergeset
+			var mergesLen = merges.length;
+			var unincMergeSet = null;
+			// iterate over mergesets
+			for (var a=0; a<mergesLen; a++) {
+				var mergeSet = merges[a];
+				var mergeSetLen = mergeSet["munis"].length;
+				// iterate over munis in this mergeset
+				for (var b=0; b<mergeSetLen; b++) {
+					if (mergeSet["munis"][b] == '99999') {
+						unincMergeSet = a;
+					}
+				}
+			}
+			// If there is an unincorporated mergeset, append selected munis to it
+			if (unincMergeSet == null) {
+				for (var i=0; i<selected.length; i++) {
+					merges[unincMergeSet]["munis"].push( $(selected[i]).attr('data-placefp') );
+				}
+			}
+			// Otherwise, create a brand new unincorporated mergeset
+			else {
+				var mergeSet = {};
+				mergeSet["name"] = "St. Louis County (unincorporated)";
+				mergeSet["munis"] = ['99999'];
+				for (var i=0; i<selected.length; i++) {
+					mergeSet["munis"].push( $(selected[i]).attr('data-placefp') );
+				}
+				merges.push(mergeSet);
 			}
 			resetControls();
 			selected.length = 0; // empty the selected array
@@ -225,7 +251,8 @@
 		var i,j;
 		var allMerges = [];
 
-		// Only run this routine if we have merges
+		// Remove any munis to be merged from the dataCopy object
+		// (they will be drawn in a different routine after the normal one)
 		if ( merges.length > 0 ) {
 			// Compile a one-dimensional list of all munis to be merged
 			for (i=0; i<merges.length; i++) {
@@ -233,25 +260,17 @@
 					allMerges.push(merges[i]["munis"][j]);
 				}
 			}
-		}
-
-		// reset variables
-		i=0, j=0;
-
-		// Only run this routine if we have deletes or merges
-		if ( deletes.length > 0 || merges.length > 0) {
-			// iterate over munis and check which ones need to be deleted or merged
+			// reset variables
+			i=0, j=0;
+			// iterate over munis and check which ones need to be merged
 			for (i=dataCopy.objects.municipalities.geometries.length - 1 ; i>=0; i--) {
 				var thisPlaceFp = dataCopy.objects.municipalities.geometries[i].properties.placefp;
-				// if this muni is in the delete list, then remove it from the dataCopy object
-				if ( deletes.indexOf(thisPlaceFp) > -1) {
-					dataCopy.objects.municipalities.geometries.splice(i,1)
-				}
 				// if this muni is in the allMerges list, then remove it from the dataCopy object
 				if ( allMerges.indexOf(thisPlaceFp) > -1) {
 					dataCopy.objects.municipalities.geometries.splice(i,1)
 				}
 			}
+
 		}
 
 		// Draw the municipality polygons
@@ -333,7 +352,7 @@
 
 		// Draw the municipalities' borders
 		map.append("path")
-			.datum(topojson.mesh(dataCopy, dataCopy.objects.municipalities, function(a, b) { return a !== b; }))
+			.datum(topojson.mesh(dataCopy, dataCopy.objects.municipalities))
 			.attr("class", "muni-boundary")
 			.attr("d", path);
 
