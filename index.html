@@ -94,8 +94,13 @@
 
 <div id="content" class="container group">
     <div id="map-container">
-        <div id="map-controls" class="inactive">
-            <h3>Change selected municipalities</h3>
+        <div id="map-controls" class="controls">
+            <h3>Map controls</h3>
+            <button id="map-selectall">Select all</button>
+            <button id="map-reset">Reset</button>
+        </div>
+        <div id="muni-controls" class="controls inactive">
+            <h3>Municipality controls</h3>
             <button id="map-merge" disabled>Merge</button>
             <button id="map-delete" disabled>Disincorporate</button>
         </div>
@@ -156,20 +161,25 @@
             top: 10px;
             left: 10px;
         }
-        #map-controls h3 {
+        #muni-controls {
+            position: absolute;
+            top: 10px;
+            left: 220px;
+        }
+        .controls h3 {
             margin-top: 0px;
             padding-top: 0px;
             margin-bottom: 0px;
         }
-        #map-controls button {
+        .controls button {
             margin-top: 15px;
             margin-right: 10px;
         }
-        #map-controls.inactive {
+        .controls.inactive {
             opacity: 0.5;
         }
 
-        #map-controls button:disabled {
+        .controls button:disabled {
             opacity: 0.25;
         }
 
@@ -231,6 +241,9 @@
 
         .muni {
           fill: #ccc;
+        }
+        .muni.uninc {
+          fill: #d9d9d9;
         }
 
         .muni:hover {
@@ -296,7 +309,7 @@
             display: inline block;
             font-weight: 900;
             margin: 25px auto 0px;
-            padding: 10px 25px;
+            padding: 10px 15px;
             font-size: 1rem;
             line-height: 1rem;
             appearance: none;

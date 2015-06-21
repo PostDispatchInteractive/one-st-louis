@@ -74,8 +74,7 @@
 
 
 		// Load the map's geopgraphy into D3
-		//d3.json("data/municipalities.topojson", function(error, data) {
-		d3.json("data/st-louis-city-county-unincorporated-simplified.topojson", function(error, data) {
+		d3.json("data/municipalities.topojson", function(error, data) {
 
 			// clone and store the data in a global variable so we can access it later
 			munis = jQuery.extend(true, {}, data);
@@ -175,7 +174,7 @@
 				}
 			}
 			// If there is an unincorporated mergeset, append selected munis to it
-			if (unincMergeSet == null) {
+			if (unincMergeSet != null) {
 				for (var i=0; i<selected.length; i++) {
 					merges[unincMergeSet]["munis"].push( $(selected[i]).attr('data-placefp') );
 				}
@@ -191,9 +190,47 @@
 				merges.push(mergeSet);
 			}
 			resetControls();
-			selected.length = 0; // empty the selected array
+			// empty the selected array
+			selected.length = 0; 
+			// rebuiold the map
 			buildMap(munis);
 		}); // end map-delete click handler 
+
+
+
+		// This code initiates a D3 click event in jQuery.
+		// Adapted from: http://stackoverflow.com/a/11180172/566307
+		jQuery.fn.d3Click = function () {
+			this.each(function (i, e) {
+				var evt = document.createEvent("MouseEvents");
+				evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+
+				e.dispatchEvent(evt);
+			});
+		};
+
+		// Select All button
+		$("#map-selectall").on("click", function() {
+			// empty the selected array
+			selected.length = 0; 
+			// console.log( map.selectAll("path.muni:not(.merged):not(.uninc)") );
+			map.selectAll("path.muni:not(.merged):not(.uninc)").each( function(d) {
+				$(this).d3Click();
+			});
+
+
+		}); // end map-delete click handler 
+
+
+
+		// Reset button
+		$("#map-reset").on("click", function() {
+			resetControls();
+			selected.length = 0; // empty the selected array
+			merges.length = 0; // empty the merges array
+			buildMap(munis);
+		}); // end map-delete click handler 
+
 
 	}); // end jQuery ready handler
 
@@ -254,6 +291,7 @@
 		// Remove any munis to be merged from the dataCopy object
 		// (they will be drawn in a different routine after the normal one)
 		if ( merges.length > 0 ) {
+			console.log(merges);
 			// Compile a one-dimensional list of all munis to be merged
 			for (i=0; i<merges.length; i++) {
 				for (j=0; j<merges[i]["munis"].length; j++) {
@@ -311,6 +349,9 @@
 			// click handler
 			.on("click", muniOnClick);
 
+		map.selectAll('path[data-placefp="99999"]').attr("class","muni uninc");
+
+
 
 		// reset variables
 		i=0, j=0;
@@ -324,7 +365,12 @@
 
 				// calculate new stats for merged municipality
 				var popTotal=0, popWhite=0, popBlack=0, popAsian=0, popOther=0, income=0;
+				// track if this is unincorporated
+				var uninc = false;
 				for (j=0; j<mergeSet.length; j++) {
+					if (mergeSet[j] == '99999') {
+						uninc = true;
+					}
 					popTotal += stats[ mergeSet[j] ]['pop-total'];
 					popWhite += stats[ mergeSet[j] ]['pop-white'];
 					popBlack += stats[ mergeSet[j] ]['pop-black'];
@@ -332,11 +378,17 @@
 					popOther += stats[ mergeSet[j] ]['pop-other'];
 					income += ( stats[ mergeSet[j] ]['per-capita-income'] * stats[ mergeSet[j] ]['pop-total']);
 				}
+				if (uninc) {
+					var theClass = 'muni uninc';
+				}
+				else {
+					var theClass = 'muni merged';
+				}
 
 				// Iterate over MASTER topojson, find all munis from this mergeset, and draw them as one polygon
 				map.append("path")
 					.datum(topojson.merge(data, data.objects.municipalities.geometries.filter(function(d) { return mergeSet.indexOf(d.properties.placefp) > -1; })))
-					.attr("class", "muni merged")
+					.attr("class", theClass)
 					.attr("merge-id", i.toString() )
 					.attr("data-name", mergeName)
 					.attr("data-population", function(d) { return formatCommas( popTotal ); })
@@ -352,7 +404,7 @@
 
 		// Draw the municipalities' borders
 		map.append("path")
-			.datum(topojson.mesh(dataCopy, dataCopy.objects.municipalities))
+			.datum(topojson.mesh(dataCopy, dataCopy.objects.municipalities/*, function(a,b) { return a != b; }*/))
 			.attr("class", "muni-boundary")
 			.attr("d", path);
 
@@ -407,42 +459,48 @@
 	function muniOnClick(d) {
 		// Check if this element was already selected
 		var thisIndex = selected.indexOf(this);
-		// If it was already selected, then let's remove it from the array
-		if ( thisIndex >= 0) {
-			selected.splice(thisIndex, 1);
-		}
-		// Otherwise, add it to the array
-		else {
-			selected.push(this);
-		}
-		// If we have one or munis selected, activate the control panel
-		if (selected.length > 0) {
-			$("#map-controls").removeClass("inactive");
-			$("#map-delete").prop("disabled",false);
-			// If MULTIPLE munis are selected ...
-			if (selected.length > 1) {
-				// ... turn on "MERGE" button
-				$("#map-merge").prop("disabled",false);
+		var thisPlaceFp = d['properties']['placefp'];
+
+		// These click handlers only apply to incorporated municipalities.
+		// So don't do anything if this is Unincorporated St. Louis County (99999)
+		if (thisPlaceFp != '99999') {
+			// If it was already selected, then let's remove it from the array
+			if ( thisIndex >= 0) {
+				selected.splice(thisIndex, 1);
 			}
-			// If ONLY ONE muni is selected ...
+			// Otherwise, add it to the array
 			else {
-				// ... turn off "MERGE" button
-				$("#map-merge").prop("disabled",true);
+				selected.push(this);
 			}
-		}
-		// If no munis are selected, disable the control panel
-		else {
-			resetControls();
-		}
+			// If we have one or munis selected, activate the control panel
+			if (selected.length > 0) {
+				$("#muni-controls").removeClass("inactive");
+				$("#map-delete").prop("disabled",false);
+				// If MULTIPLE munis are selected ...
+				if (selected.length > 1) {
+					// ... turn on "MERGE" button
+					$("#map-merge").prop("disabled",false);
+				}
+				// If ONLY ONE muni is selected ...
+				else {
+					// ... turn off "MERGE" button
+					$("#map-merge").prop("disabled",true);
+				}
+			}
+			// If no munis are selected, disable the control panel
+			else {
+				resetControls();
+			}
 
-		resetSelections();
+			resetSelections();
 
-		// I'm running selectAll on a clone of select, rather than on select itself.
-		// The reason is that d3 seems to pollute the select array with a "parentNode: false"
-		// element. I don't understand how/why this gets added, but I figured better to
-		// avoid it creeping into the select array itself.
-		var selectedCopy = selected.slice(0);
-		d3.selectAll(selectedCopy).classed("active", true);
+			// I'm running selectAll on a clone of select, rather than on select itself.
+			// The reason is that d3 seems to pollute the select array with a "parentNode: false"
+			// element. I don't understand how/why this gets added, but I figured better to
+			// avoid it creeping into the select array itself.
+			var selectedCopy = selected.slice(0);
+			d3.selectAll(selectedCopy).classed("active", true);
+		}
 	}
 
 
@@ -451,7 +509,7 @@
 	}
 
 	function resetControls() {
-		$("#map-controls").addClass("inactive");
+		$("#muni-controls").addClass("inactive");
 		$("#map-merge").prop("disabled",true);
 		$("#map-delete").prop("disabled",true);
 	}
