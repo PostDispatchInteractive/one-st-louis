@@ -12,8 +12,8 @@
 	selected, 
 	mergedSelected, 
 	merges, 
-	active, 
 	munis, 
+	allPlaceFps,
 	stats;
 
 
@@ -68,16 +68,19 @@
 
 		selected = [];
 		merges = [];
-
-		active = d3.select(null);
-		munis;
+		allPlaceFps = [];
 
 
 		// Load the map's geopgraphy into D3
-		d3.json("data/municipalities.topojson", function(error, data) {
+		d3.json("data/cleaned-30.topojson", function(error, data) {
 
 			// clone and store the data in a global variable so we can access it later
 			munis = jQuery.extend(true, {}, data);
+
+			// Iterate over all munis and store their PlaceFP codes so we can check stuff later
+			for (var i=0; i<munis.objects.municipalities.geometries.length; i++) {
+				allPlaceFps.push( munis.objects.municipalities.geometries[i].properties.placefp );
+			}
 
 			// ========================================================
 			// BEGIN: CODE FOR CENTERING THE MAP
@@ -113,6 +116,7 @@
 		});
 
 
+
 		// MAP CONTROL CLICK HANDLERS
 		// Merge button
 		$("#map-merge").on("click", function() {
@@ -128,13 +132,43 @@
 					}
 					// empty the name field so it can be re-used later.
 					$('#merge-name-popup input').val('');
-					// Build the merge set
+
+					// BEGIN MERGING LOGIC
+					// 1. Create mergeSet object
 					var mergeSet = {};
 					mergeSet["name"] = newName;
 					mergeSet["munis"] = [];
+
+					// 2. Compile list of all municipalities to be merged.
 					for (var i=0; i<selected.length; i++) {
-						mergeSet["munis"].push( $(selected[i]).attr('data-placefp') );
+						var thisPlaceFp = selected[i].getAttribute('data-placefp');
+						// 2a. Is this selection element in our AllPlaceFps list? If so, it's a single muni.
+						if ( allPlaceFps.indexOf( thisPlaceFp ) > -1 ) {
+							// Add it to our list of munis to be merged
+							mergeSet["munis"].push( thisPlaceFp );
+						}
+						// 2b. It is NOT in the list. That means it's a mergeset.
+						else {
+							// Iterate over all mergesets
+							for (var j=merges.length - 1; j>= 0; j--) {
+								// Check if this is the mergeset we're looking for
+								if ( merges[j]['placefp'] == thisPlaceFp ) {
+									// Okay, now get all the munis from this mergeset
+									for (var k=0; k<merges[j]["munis"].length; k++) {
+										// Add it to our list of munis to be merged
+										mergeSet["munis"].push( merges[j]["munis"][k] );
+									}
+									// Now remove this old mergeset from the master merges list
+									merges.splice(j,1);
+								}
+							}
+						}
 					}
+
+					// generate dummy placefp
+					var mergeSetSum = mergeSet["munis"].reduce(function(a, b){return parseInt(a)+parseInt(b);})
+					mergeSet["placefp"] = (mergeSetSum * Math.random()).toString(36).substr(2, 5);
+
 					// Append the merge set to our master list of mergesets
 					merges.push(mergeSet);
 					resetControls();
@@ -157,44 +191,32 @@
 
 		}); // end map-merge click handler 
 
-		// Disincorporate button
-		$("#map-delete").on("click", function() {
-			// check if there is an unincorporated mergeset
-			var mergesLen = merges.length;
-			var unincMergeSet = null;
-			// iterate over mergesets
-			for (var a=0; a<mergesLen; a++) {
-				var mergeSet = merges[a];
-				var mergeSetLen = mergeSet["munis"].length;
-				// iterate over munis in this mergeset
-				for (var b=0; b<mergeSetLen; b++) {
-					if (mergeSet["munis"][b] == '99999') {
-						unincMergeSet = a;
+
+
+		// Split button
+		$("#map-split").on("click", function() {
+			// Iterate over selection and find any mergesets
+			for (var i=0; i<selected.length; i++) {
+				var thisPlaceFp = selected[i].getAttribute('data-placefp');
+				// If it's not in allPlaceFps, then its' a mergeset
+				if ( allPlaceFps.indexOf( thisPlaceFp ) == -1 ) {
+					// Iterate over master mergeset list
+					for (var j=merges.length - 1; j>= 0; j--) {
+						// Check if this is the mergeset we're looking for
+						if ( merges[j]['placefp'] == thisPlaceFp ) {
+							// Remove this mergeset from the master merges list
+							merges.splice(j,1);
+						}
 					}
 				}
 			}
-			// If there is an unincorporated mergeset, append selected munis to it
-			if (unincMergeSet != null) {
-				for (var i=0; i<selected.length; i++) {
-					merges[unincMergeSet]["munis"].push( $(selected[i]).attr('data-placefp') );
-				}
-			}
-			// Otherwise, create a brand new unincorporated mergeset
-			else {
-				var mergeSet = {};
-				mergeSet["name"] = "St. Louis County (unincorporated)";
-				mergeSet["munis"] = ['99999'];
-				for (var i=0; i<selected.length; i++) {
-					mergeSet["munis"].push( $(selected[i]).attr('data-placefp') );
-				}
-				merges.push(mergeSet);
-			}
 			resetControls();
-			// empty the selected array
-			selected.length = 0; 
-			// rebuiold the map
+			selected.length = 0; // empty the selected array
 			buildMap(munis);
-		}); // end map-delete click handler 
+		}); // end map-merge click handler 
+
+
+
 
 
 
@@ -219,7 +241,7 @@
 			});
 
 
-		}); // end map-delete click handler 
+		}); // end map-selectall click handler 
 
 
 
@@ -229,7 +251,7 @@
 			selected.length = 0; // empty the selected array
 			merges.length = 0; // empty the merges array
 			buildMap(munis);
-		}); // end map-delete click handler 
+		}); // end map-reset click handler 
 
 
 	}); // end jQuery ready handler
@@ -349,8 +371,6 @@
 			// click handler
 			.on("click", muniOnClick);
 
-		map.selectAll('path[data-placefp="99999"]').attr("class","muni uninc");
-
 
 
 		// reset variables
@@ -362,15 +382,13 @@
 			for (i=0; i<merges.length; i++) {
 				var mergeSet = merges[i]["munis"];
 				var mergeName = merges[i]["name"];
+				var mergePlaceFp = merges[i]["placefp"];
 
 				// calculate new stats for merged municipality
 				var popTotal=0, popWhite=0, popBlack=0, popAsian=0, popOther=0, income=0;
 				// track if this is unincorporated
 				var uninc = false;
 				for (j=0; j<mergeSet.length; j++) {
-					if (mergeSet[j] == '99999') {
-						uninc = true;
-					}
 					popTotal += stats[ mergeSet[j] ]['pop-total'];
 					popWhite += stats[ mergeSet[j] ]['pop-white'];
 					popBlack += stats[ mergeSet[j] ]['pop-black'];
@@ -378,33 +396,31 @@
 					popOther += stats[ mergeSet[j] ]['pop-other'];
 					income += ( stats[ mergeSet[j] ]['per-capita-income'] * stats[ mergeSet[j] ]['pop-total']);
 				}
-				if (uninc) {
-					var theClass = 'muni uninc';
-				}
-				else {
-					var theClass = 'muni merged';
-				}
+				var mergeClass = 'muni merged';
 
 				// Iterate over MASTER topojson, find all munis from this mergeset, and draw them as one polygon
 				map.append("path")
 					.datum(topojson.merge(data, data.objects.municipalities.geometries.filter(function(d) { return mergeSet.indexOf(d.properties.placefp) > -1; })))
-					.attr("class", theClass)
+					.attr("class", mergeClass)
 					.attr("merge-id", i.toString() )
 					.attr("data-name", mergeName)
+					.attr("data-placefp", mergePlaceFp)
 					.attr("data-population", function(d) { return formatCommas( popTotal ); })
 					.attr("data-income", function(d) { return formatMoney( income / popTotal ); })
 					.attr("data-pct-white", function(d) { return formatPct( popWhite / popTotal ); })
 					.attr("data-pct-black", function(d) { return formatPct( popBlack / popTotal ); })
 					.attr("data-pct-asian", function(d) { return formatPct( popAsian / popTotal ); })
 					.attr("data-pct-other", function(d) { return formatPct( popOther / popTotal ); })
-					.attr("d", path);
+					.attr("d", path)
+					// click handler
+					.on("click", muniOnClick);
 			}
 		}
 
 
 		// Draw the municipalities' borders
 		map.append("path")
-			.datum(topojson.mesh(dataCopy, dataCopy.objects.municipalities/*, function(a,b) { return a != b; }*/))
+			.datum(topojson.mesh(dataCopy, dataCopy.objects.municipalities, function(a,b) { return a != b; }))
 			.attr("class", "muni-boundary")
 			.attr("d", path);
 
@@ -457,50 +473,56 @@
 
 
 	function muniOnClick(d) {
+		// this = the svg shape on the canvas, which includes all the data-* attributes
+		// d = D3 data element
+		// d is fine for single munis, but useless for MERGED munis, because all properties are lost.
+		// So, use this instead.
+
 		// Check if this element was already selected
+		var thisPlaceFp = this.getAttribute('data-placefp');
 		var thisIndex = selected.indexOf(this);
-		var thisPlaceFp = d['properties']['placefp'];
 
-		// These click handlers only apply to incorporated municipalities.
-		// So don't do anything if this is Unincorporated St. Louis County (99999)
-		if (thisPlaceFp != '99999') {
-			// If it was already selected, then let's remove it from the array
-			if ( thisIndex >= 0) {
-				selected.splice(thisIndex, 1);
-			}
-			// Otherwise, add it to the array
-			else {
-				selected.push(this);
-			}
-			// If we have one or munis selected, activate the control panel
-			if (selected.length > 0) {
-				$("#muni-controls").removeClass("inactive");
-				$("#map-delete").prop("disabled",false);
-				// If MULTIPLE munis are selected ...
-				if (selected.length > 1) {
-					// ... turn on "MERGE" button
-					$("#map-merge").prop("disabled",false);
-				}
-				// If ONLY ONE muni is selected ...
-				else {
-					// ... turn off "MERGE" button
-					$("#map-merge").prop("disabled",true);
-				}
-			}
-			// If no munis are selected, disable the control panel
-			else {
-				resetControls();
-			}
-
-			resetSelections();
-
-			// I'm running selectAll on a clone of select, rather than on select itself.
-			// The reason is that d3 seems to pollute the select array with a "parentNode: false"
-			// element. I don't understand how/why this gets added, but I figured better to
-			// avoid it creeping into the select array itself.
-			var selectedCopy = selected.slice(0);
-			d3.selectAll(selectedCopy).classed("active", true);
+		// If it was already selected, then let's remove it from the array
+		if ( thisIndex >= 0) {
+			selected.splice(thisIndex, 1);
 		}
+		// Otherwise, add it to the array
+		else {
+			selected.push(this);
+		}
+		// If we have one or munis selected, activate the control panel
+		if (selected.length > 0) {
+			$("#muni-controls").removeClass("inactive");
+			// If MULTIPLE munis are selected ...
+			if (selected.length > 1) {
+				// ... turn on "MERGE" button
+				$("#map-merge").prop("disabled",false);
+				// ... turn off "SPLIT" button
+				$("#map-split").prop("disabled",true);
+			}
+			// If ONLY ONE muni is selected ...
+			else {
+				// ... turn off "MERGE" button
+				$("#map-merge").prop("disabled",true);
+				// if this is a mergeset, turn on "SPLIT" button
+				if ( allPlaceFps.indexOf(thisPlaceFp) == -1 ) {
+					$("#map-split").prop("disabled",false);
+				}
+			}
+		}
+		// If no munis are selected, disable the control panel
+		else {
+			resetControls();
+		}
+
+		resetSelections();
+
+		// I'm running selectAll on a clone of select, rather than on select itself.
+		// The reason is that d3 seems to pollute the select array with a "parentNode: false"
+		// element. I don't understand how/why this gets added, but I figured better to
+		// avoid it creeping into the select array itself.
+		var selectedCopy = selected.slice(0);
+		d3.selectAll(selectedCopy).classed("active", true);
 	}
 
 
@@ -511,7 +533,7 @@
 	function resetControls() {
 		$("#muni-controls").addClass("inactive");
 		$("#map-merge").prop("disabled",true);
-		$("#map-delete").prop("disabled",true);
+		$("#map-split").prop("disabled",true);
 	}
 
 	function resetStats() {
@@ -519,12 +541,6 @@
 			$(this).empty();
 		});
 	}
-
-	// If the drag behavior prevents the default click,
-	// also stop propagation so we don’t click-to-zoom.
-	// function stopped() {
-	//	 if (d3.event.defaultPrevented) d3.event.stopPropagation();
-	// }
 
 
 
