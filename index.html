@@ -80,13 +80,9 @@
     <!-- Styles -->
     <link rel="stylesheet" href="http://cdn.jsdelivr.net/normalize/3.0.2/normalize.min.css">
 
-    <!-- Dropdown.js -->
-    <link href="http://cdn.rawgit.com/FezVrasta/dropdown.js/master/jquery.dropdown.css" rel="stylesheet">
-
     <!-- Master stylesheet -->
     <link rel="stylesheet" type="text/css" href="css/main.css?123" />
-    <link rel="stylesheet" type="text/css" href="http://cdn.jsdelivr.net/qtip2/2.2.1/jquery.qtip.min.css" />
-
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
 
 </head>
 
@@ -94,16 +90,19 @@
 
 <div id="content" class="container group">
     <div id="map-container">
-        <div id="map-controls" class="controls">
-            <h3>Map controls</h3>
-            <button id="map-selectall">Select all</button>
-            <button id="map-reset">Reset</button>
-        </div>
-        <div id="muni-controls" class="controls inactive">
-            <h3>Municipality controls</h3>
-            <button id="map-merge" disabled>Merge</button>
-            <button id="map-split" disabled>Split</button>
-        </div>
+        <div id="control-wrapper">
+            <div id="map-controls" class="controls">
+                <h3>Map</h3>
+                <button id="map-selectall">Select all</button>
+                <button id="map-reset">Reset</button>
+                <button id="map-share">Share</button>
+            </div>
+            <div id="muni-controls" class="controls inactive">
+                <h3>Municipalities</h3>
+                <button id="map-merge" disabled>Merge</button>
+                <button id="map-split" disabled>Split</button>
+            </div>
+            </div>
         <div id="map-stats" class="inactive">
             <h2 id="stats-name"><span></span></h2>
             <div id="stats-population" class="stats-big">Population: <span></span></div>
@@ -115,14 +114,25 @@
             <p><em>Values are <u>estimates</u> derived from the 2009-13 American Community Survey.</em><p>
 
         </div>
+        <div id="map-message"></div>
         <div id="map"></div>
     </div>
 
-    <section id="merge-name-popup">
+    <section id="merge-name-popup" class="popup">
         <h2>Name your new municipality</h2>
         <input type="text" width="30" placeholder="Metropolis" />
         <button>Submit</button>
     </section>
+
+
+    <section id="share-popup" class="popup">
+        <h3>Share your new St. Louis</h3>
+            <a id="shareFb" href="#" target="_blank"><span>Facebook</span><i class="fa fa-twitter"></i></a>
+            <a id="shareTw" href="#" target="_blank"><span>Twitter</span><i class="fa fa-facebook"></i></a>
+            <a id="shareUr" href="#" target="_blank"><span>Link</span><i class="fa fa-link"></i></a>
+    </section>
+
+
 
 </div>
 
@@ -145,6 +155,8 @@
     </footer>
 
     <style>
+
+
         body #content #map-container {
           width: 100%;
           float: none;
@@ -155,16 +167,21 @@
         }
 
         /* CONTROL STYLES */
-
-        #map-controls {
+        #control-wrapper {
             position: absolute;
             top: 10px;
             left: 10px;
         }
+        #map-controls {
+            position: relative;
+            display: inline-block;
+            padding-right: 5px; /* button already has 10px of margin */
+            margin-right: 15px;
+            border-right: 1px dotted #aaa;
+        }
         #muni-controls {
-            position: absolute;
-            top: 10px;
-            left: 220px;
+            position: relative;
+            display: inline-block;
         }
         .controls h3 {
             margin-top: 0px;
@@ -175,16 +192,26 @@
             margin-top: 15px;
             margin-right: 10px;
         }
-        .controls.inactive {
-            opacity: 0.5;
+        .controls.inactive h3 {
+            opacity: 0.25;
         }
 
         .controls button:disabled {
             opacity: 0.25;
         }
 
-        /* STATS BOX STYLES */
 
+        /* MESSAGE STYLES */
+        #map-message {
+            position: absolute;
+            top: 150px;
+            left: 10px;
+            width: 300px;
+            z-index: 0;
+        }
+
+
+        /* STATS BOX STYLES */
         #map-stats {
             position: absolute;
             background-color: white;
@@ -195,6 +222,7 @@
             border-radius: 10px;
             display: block;
             padding: 0px 15px;
+            z-index: 100;
         }
 
         #map-stats h2 {
@@ -230,6 +258,40 @@
         #map-stats.inactive {
             display: none;
         }
+
+        /* SHARING PANEL */
+        #share-popup {
+            text-align: center;
+            border: 1px solid black;
+        }
+        #share-popup h3 {
+            margin-top: 0px;
+        }
+
+        #share-popup a {
+            display: inline-block;
+            background: #ccc;
+            color: white;
+            padding: 10px;
+            height: 3rem;
+            width: 3rem;
+            border-radius: 50%;
+            text-align: center;
+        }
+
+        #share-popup a:hover {
+            background: black;
+        }
+
+        #share-popup a span {
+            display: none;
+        }
+        #share-popup a i {
+            font-size: 1.5rem;
+            line-height: 1.5rem;
+            padding-top: 3px;
+        }
+
 
         /* MAP STYLES */
 
@@ -293,13 +355,13 @@
             border: solid 5px #969696;
         }
 
-        #merge-name-popup {
+        .popup {
             padding: 25px;
             background: white;
             display: none;
             font-weight: 400;
         }
-        #merge-name-popup h2 {
+        .popup h2 {
             text-align: center;
             margin-top: 0px;
             padding-top: 0px;
@@ -343,6 +405,7 @@
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="http://d3js.org/topojson.v1.min.js"></script>
     <script src="http://staging.graphics.stltoday.com/apps/one-st-louis/js/jquery.bpopup-0.11.0.min.js"></script>
+    <script src="js/lz-string.min.js"></script>
     <script src="js/main.js"></script>
 
 

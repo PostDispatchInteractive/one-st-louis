@@ -14,8 +14,18 @@
 	merges, 
 	munis, 
 	allPlaceFps,
-	stats;
+	stats,
+	shared;
 
+
+	function getUrlParameter( name, url ) {
+		if (!url) url = location.href
+		name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+		var regexS = "[\\?&]"+name+"=([^&#]*)";
+		var regex = new RegExp( regexS );
+		var results = regex.exec( url );
+	return results == null ? null : results[1];
+	}
 
 
 	// ####################################
@@ -70,6 +80,27 @@
 		merges = [];
 		allPlaceFps = [];
 
+
+		// Check if there's a map parameter (user clicked a share link)
+		var userMap = getUrlParameter("map");
+		if (userMap) {
+			try {
+				merges = JSON.parse( LZString.decompressFromEncodedURIComponent( userMap ) );
+				shared = true;
+			} 
+			catch(e){
+				// error-handling would go here. For now, I'm just going to reset merges to an empty array.
+				merges = [];
+				shared = false
+			}
+		}
+		else {
+			shared = false;
+		}
+
+		// Hide share button on load.
+		// It will be turned on when user creates their first merge.
+		$('#map-share').prop("disabled",true);
 
 		// Load the map's geopgraphy into D3
 		d3.json("data/cleaned-30.topojson", function(error, data) {
@@ -171,6 +202,7 @@
 
 					// Append the merge set to our master list of mergesets
 					merges.push(mergeSet);
+					resetMessage();
 					resetControls();
 					selected.length = 0; // empty the selected array
 					buildMap(munis);
@@ -210,6 +242,7 @@
 					}
 				}
 			}
+			resetMessage();
 			resetControls();
 			selected.length = 0; // empty the selected array
 			buildMap(munis);
@@ -217,7 +250,22 @@
 
 
 
+		// Share button
+		$("#map-share").on("click", function() {
+			if ( merges.length > 0 && shared == false) {
+				var mapCode = LZString.compressToEncodedURIComponent( JSON.stringify(merges) );
+				var encShareUrl = 'http://staging.graphics.stltoday.com/apps/one-st-louis/index.html?map=' + mapCode;
 
+				var fbShare = 'https://www.facebook.com/sharer.php?u=' + encShareUrl;
+				var twShare = 'https://twitter.com/intent/tweet?source=tweetbutton&text=I%20just%20built%20a%20new%20St.%20Louis.%20Check%20it%20out%20on%20%40stltoday.%20&url=' + encShareUrl + '&via=stltoday';
+
+				$('#shareFb').attr('href', fbShare);
+				$('#shareTw').attr('href', twShare);
+				$('#shareUr').attr('href', encShareUrl);
+
+				var bPopup = $('#share-popup').bPopup();
+			}
+		}); // end map-selectall click handler 
 
 
 		// This code initiates a D3 click event in jQuery.
@@ -235,8 +283,8 @@
 		$("#map-selectall").on("click", function() {
 			// empty the selected array
 			selected.length = 0; 
-			// console.log( map.selectAll("path.muni:not(.merged):not(.uninc)") );
-			map.selectAll("path.muni:not(.merged):not(.uninc)").each( function(d) {
+			// map.selectAll("path.muni:not(.merged):not(.uninc)").each( function(d) {
+			map.selectAll("path.muni").each( function(d) {
 				$(this).d3Click();
 			});
 
@@ -244,9 +292,9 @@
 		}); // end map-selectall click handler 
 
 
-
 		// Reset button
 		$("#map-reset").on("click", function() {
+			resetMessage();
 			resetControls();
 			selected.length = 0; // empty the selected array
 			merges.length = 0; // empty the merges array
@@ -313,7 +361,6 @@
 		// Remove any munis to be merged from the dataCopy object
 		// (they will be drawn in a different routine after the normal one)
 		if ( merges.length > 0 ) {
-			console.log(merges);
 			// Compile a one-dimensional list of all munis to be merged
 			for (i=0; i<merges.length; i++) {
 				for (j=0; j<merges[i]["munis"].length; j++) {
@@ -331,6 +378,19 @@
 				}
 			}
 
+		}
+
+		// Draw share message if user clicked a share link to get here
+		if (merges.length > 0 && shared == true) {
+			$('#map-message').html('Your friend created a new St. Louis. <br/>Click "reset" to start making your own!');
+		}
+		// Otherwise, turn on share button if we have merged munis
+		else if (merges.length > 0) {
+			$('#map-share').prop("disabled",false);
+		}
+		// Or, if no merged munis, turn share button off.
+		else {
+			$('#map-share').prop("disabled",true);
 		}
 
 		// Draw the municipality polygons
@@ -534,6 +594,11 @@
 		$("#muni-controls").addClass("inactive");
 		$("#map-merge").prop("disabled",true);
 		$("#map-split").prop("disabled",true);
+	}
+
+	function resetMessage() {
+		$('#map-message').empty();
+		shared = false;
 	}
 
 	function resetStats() {
