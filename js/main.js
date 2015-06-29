@@ -1,6 +1,17 @@
 // using a closure to protect global variables
 (function () {
 
+	// Add some methods to aid in grabbing random elements from arrays
+	Array.prototype.randomElement = function () {
+		return this[Math.floor(Math.random() * this.length)]
+	}
+
+
+	// Add method for title case
+	String.prototype.toTitleCase = function () {
+		return this.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+	};
+
 	// Global variables
 	var width, 
 	height, 
@@ -153,16 +164,141 @@
 		$("#map-merge").on("click", function() {
 			// Pop up box to ask user to name their new merged muni
 			var bPopup = $('#merge-name-popup').bPopup({
+				onOpen: function() {
+					// When we open the dialog, we need to generate possible names for the merged muni
+					// and add them to the form. 
+
+					namePieces = {
+						"pre":[],
+						"pieces":[],
+						"suf":[],
+						"words":[]
+					}
+					var names = [];
+					var newNames = [];
+					var stLouisCity = false;
+					var stLouisCounty = false;
+
+					// Compile new name pieces
+					for (var i=0; i<selected.length; i++) {
+						var thisPlaceFp = selected[i].getAttribute('data-placefp');
+						// Check if this muni is St. Louis city or County
+						if (thisPlaceFp == '65000' ) { stLouisCity = true; }
+						else if (thisPlaceFp == '99999' ) { stLouisCounty = true; }
+
+						// Handle an actual muni
+						if ( allPlaceFps.indexOf( thisPlaceFp ) > -1 ) {
+							// append new name pieces
+							namePieces['pre'] = namePieces['pre'].concat( stats[thisPlaceFp]['pre'] );
+							namePieces['pieces'] = namePieces['pieces'].concat( stats[thisPlaceFp]['pieces'] );
+							namePieces['suf'] = namePieces['suf'].concat( stats[thisPlaceFp]['suf'] );
+							namePieces['words'] = namePieces['words'].concat( stats[thisPlaceFp]['words'] );
+							// append name to name list
+							names.push( selected[i].getAttribute('data-name') );
+						}
+						// Handle a mergeset.
+						else {
+							// Iterate over all mergesets
+							for (var j=merges.length - 1; j>= 0; j--) {
+								// Check if this is the mergeset we're looking for
+								if ( merges[j]['placefp'] == thisPlaceFp ) {
+									// Okay, now get all the munis from this mergeset
+									for (var k=0; k<merges[j]["munis"].length; k++) {
+										// Add it to our list of munis to be merged
+										var thisMuniPlaceFp = merges[j]["munis"][k]
+										// Check if this muni is St. Louis city or County
+										if (thisPlaceFp == '65000' ) { stLouisCity = true; }
+										else if (thisPlaceFp == '99999' ) { stLouisCounty = true; }
+										// append new name pieces
+										namePieces['pre'] = namePieces['pre'].concat( stats[thisMuniPlaceFp]['pre'] );
+										namePieces['pieces'] = namePieces['pieces'].concat( stats[thisMuniPlaceFp]['pieces'] );
+										namePieces['suf'] = namePieces['suf'].concat( stats[thisMuniPlaceFp]['suf'] );
+										namePieces['words'] = namePieces['words'].concat( stats[thisMuniPlaceFp]['words'] );
+										// The names are stored in the D3 geometries object
+										// So, find the right object
+										var thisMuniGeometry = munis.objects.municipalities.geometries.filter(function( obj ) {
+											return obj.properties.placefp == thisMuniPlaceFp;
+										});
+										// now push the muni's name onto our running name list
+										names.push( thisMuniGeometry[0].properties.name );
+									}
+								}
+							}
+						}
+					}
+					var preWeight = 0.2;
+					var piecesWeight = 0.3;
+					var sufWeight = 0.2;
+					var wordsWeight1 = 0.5;
+					var wordsWeight2 = 0.8;
+
+					// If there aren't pieces, then make sure prefix and suffix won't be skipped
+					if ( namePieces["pieces"].length < 1 ) {
+						preWeight -= 0.2;
+						sufWeight -= 0.2;
+					}
+					// If there aren't words, then make it more likely prefix, suffix, pieces won't be skipped
+					if ( namePieces["words"].length < 1 ) {
+						preWeight -= 0.1;
+						sufWeight -= 0.1;
+						piecesWeight -= 0.1;
+					}
+
+					for (var z=0; z<5; z++) {
+						// using a do-while loop to ensure we get new, unique names
+						// that don't match previously-generated names, or existing muni names.
+						do {
+							var name = '';
+							if (namePieces["pre"].length > 0 && (Math.random() > preWeight) ) {
+								name += namePieces["pre"].randomElement();
+							}
+							if (namePieces["pieces"].length > 0 && (Math.random() > piecesWeight) ) {
+								name += namePieces["pieces"].randomElement();
+							}
+							if (namePieces["suf"].length > 0 && (Math.random() > sufWeight) ) {
+								name += namePieces["suf"].randomElement();
+							}
+							if (namePieces["words"].length > 0 && (Math.random() > wordsWeight1) ) {
+								var word1 = namePieces["words"].randomElement();
+								name += ' ';
+								name += word1;
+								// remove this word from the word list so it doesn't get reused.
+								var index = namePieces['words'].indexOf(word1);
+								namePieces['words'].splice(index, 1);
+							}
+							if (namePieces["words"].length > 0 && (Math.random() > wordsWeight2) ) {
+								name += ' ';
+								name += namePieces["words"].randomElement();
+							}
+							name = name.toTitleCase().trim();
+							name = name.replace(/(.)\1{2,}/g, '$1$1');
+						// if the name is in either the muni list, or the new name list, then re-run the loop
+						} while ( names.indexOf(name) > -1 || newNames.indexOf(name) > -1 );
+						newNames.push( name );
+					}
+					// Add a "St. Louis" option if St. Louis city or uninc St. Louis County is one of the munis selected
+					if (stLouisCity) {
+						$('#merge-name-popup select').append('<option>St. Louis</option>');
+					}
+					else if (stLouisCounty) {
+						$('#merge-name-popup select').append('<option>Unincorporated St. Louis County</option>');
+					}
+					// Append all the auto-generated options to the name select list
+					for (var y=0; y<newNames.length; y++) {
+						$('#merge-name-popup select').append('<option>' + newNames[y] + '</option>');
+					}
+				},
+
 				// After they submit the form 
 				onClose: function() {
 					// Store user's submitted name
-					var newName = $('#merge-name-popup input').val();
+					var newName = $('#merge-name-popup option:selected').text();
 					// If they didn't submit anything, use generic label
 					if ( !newName.trim() > '' ) {
 						newName = 'Merged municipality'
 					}
-					// empty the name field so it can be re-used later.
-					$('#merge-name-popup input').val('');
+					// empty the name select list so it can be re-used later.
+					$('#merge-name-popup select').empty();
 
 					// BEGIN MERGING LOGIC
 					// 1. Create mergeSet object
@@ -170,7 +306,9 @@
 					mergeSet["name"] = newName;
 					mergeSet["munis"] = [];
 
+
 					// 2. Compile list of all municipalities to be merged.
+					//    Also, compile new name pieces
 					for (var i=0; i<selected.length; i++) {
 						var thisPlaceFp = selected[i].getAttribute('data-placefp');
 						// 2a. Is this selection element in our AllPlaceFps list? If so, it's a single muni.

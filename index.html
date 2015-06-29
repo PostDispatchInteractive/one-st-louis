@@ -120,8 +120,8 @@
     </div>
 
     <section id="merge-name-popup" class="popup">
-        <h2>Name your new municipality</h2>
-        <input type="text" width="30" placeholder="Metropolis" />
+        <h2>Pick a name for your new municipality</h2>
+        <select></select>
         <button>Submit</button>
     </section>
 
@@ -364,6 +364,16 @@
         input[type="text"].focus {
             border: solid 5px #969696;
         }
+
+        #merge-name-popup select {
+            display: block;
+            margin: 0;
+            font-size: 18px;
+            appearance: none;
+            box-shadow: none;
+            border-radius: none;
+        }
+
 
         .popup {
             padding: 25px;
