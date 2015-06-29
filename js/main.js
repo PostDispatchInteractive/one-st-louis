@@ -164,16 +164,21 @@
 		$("#map-merge").on("click", function() {
 			// Pop up box to ask user to name their new merged muni
 			var bPopup = $('#merge-name-popup').bPopup({
-				onOpen: function() {
-					// When we open the dialog, we need to generate possible names for the merged muni
-					// and add them to the form. 
+				// ===========================
+				// BEGIN NAME GENERATING CODE
+				// This got a lot more complicated than I originally thought
+				// ===========================
 
+				// When we open the dialog, we need to generate possible names for the merged muni
+				// and add them to the form. 
+				onOpen: function() {
 					namePieces = {
 						"pre":[],
 						"pieces":[],
 						"suf":[],
 						"words":[]
 					}
+					var allNamePieces = [];
 					var names = [];
 					var newNames = [];
 					var stLouisCity = false;
@@ -195,6 +200,11 @@
 							namePieces['words'] = namePieces['words'].concat( stats[thisPlaceFp]['words'] );
 							// append name to name list
 							names.push( selected[i].getAttribute('data-name') );
+							// append all pieces to allNamePieces list
+							allNamePieces = allNamePieces.concat( stats[thisPlaceFp]['pre'] );
+							allNamePieces = allNamePieces.concat( stats[thisPlaceFp]['pieces'] );
+							allNamePieces = allNamePieces.concat( stats[thisPlaceFp]['suf'] );
+							allNamePieces = allNamePieces.concat( stats[thisPlaceFp]['words'] );
 						}
 						// Handle a mergeset.
 						else {
@@ -214,6 +224,11 @@
 										namePieces['pieces'] = namePieces['pieces'].concat( stats[thisMuniPlaceFp]['pieces'] );
 										namePieces['suf'] = namePieces['suf'].concat( stats[thisMuniPlaceFp]['suf'] );
 										namePieces['words'] = namePieces['words'].concat( stats[thisMuniPlaceFp]['words'] );
+										// append all pieces to allNamePieces list
+										allNamePieces = allNamePieces.concat( stats[thisMuniPlaceFp]['pre'] );
+										allNamePieces = allNamePieces.concat( stats[thisMuniPlaceFp]['pieces'] );
+										allNamePieces = allNamePieces.concat( stats[thisMuniPlaceFp]['suf'] );
+										allNamePieces = allNamePieces.concat( stats[thisMuniPlaceFp]['words'] );
 										// The names are stored in the D3 geometries object
 										// So, find the right object
 										var thisMuniGeometry = munis.objects.municipalities.geometries.filter(function( obj ) {
@@ -232,22 +247,33 @@
 					var wordsWeight1 = 0.5;
 					var wordsWeight2 = 0.8;
 
-					// If there aren't pieces, then make sure prefix and suffix won't be skipped
-					if ( namePieces["pieces"].length < 1 ) {
-						preWeight -= 0.2;
-						sufWeight -= 0.2;
-					}
 					// If there aren't words, then make it more likely prefix, suffix, pieces won't be skipped
 					if ( namePieces["words"].length < 1 ) {
 						preWeight -= 0.1;
 						sufWeight -= 0.1;
 						piecesWeight -= 0.1;
 					}
+					// If there aren't pieces, then make sure prefix and suffix won't be skipped
+					if ( namePieces["pieces"].length < 1 ) {
+						preWeight = 0;
+						sufWeight = 0;
+					}
 
 					for (var z=0; z<5; z++) {
-						// using a do-while loop to ensure we get new, unique names
-						// that don't match previously-generated names, or existing muni names.
+						// using a do-while loop to ensure we get unique names that
+						// don't match previously-generated names or existing muni names.
+						// 
+						// Also, be careful with this loop. In some cases, fewer than five 
+						// combinations can be assembled, which means the while() condition
+						// never gets fulfilled, and the loop runs infinitely.
+						// 
+						// To avoid this, I will add a counter which forces the loop to break 
+						// if it runs too many times.
+						var numCalls = 0;
 						do {
+							numCalls++;
+							if (numCalls > 20) { break; }
+
 							var name = '';
 							if (namePieces["pre"].length > 0 && (Math.random() > preWeight) ) {
 								name += namePieces["pre"].randomElement();
@@ -270,12 +296,31 @@
 								name += ' ';
 								name += namePieces["words"].randomElement();
 							}
+							// name cleanup
 							name = name.toTitleCase().trim();
 							name = name.replace(/(.)\1{2,}/g, '$1$1');
+							name = name.replace('eette', 'ette');
+							// remove stray bits
+							if (name == 'St.' ||  name == 'Louis' ) { name = 'St. Louis'; }
 						// if the name is in either the muni list, or the new name list, then re-run the loop
 						} while ( names.indexOf(name) > -1 || newNames.indexOf(name) > -1 );
-						newNames.push( name );
+						// Add to the new names list, but only if it's not an empty string
+						if ( name > '' ) {
+							newNames.push( name );
+						}
 					}
+					// Remove any duplicates from the newNames array (these occur in merges
+					// where there isn't much material to start with, and we are forced to
+					// break the while loop early.)
+					newNames = newNames.filter(function(item, pos, self) {
+						return self.indexOf(item) == pos;
+					});
+
+					// Iterate over allNamePieces and cleanup so we can do straight comparison
+					for (var x=0; x<allNamePieces.length; x++) {
+						allNamePieces[x] = allNamePieces[x].toTitleCase().trim();
+					}
+
 					// Add a "St. Louis" option if St. Louis city or uninc St. Louis County is one of the munis selected
 					if (stLouisCity) {
 						$('#merge-name-popup select').append('<option>St. Louis</option>');
@@ -285,7 +330,11 @@
 					}
 					// Append all the auto-generated options to the name select list
 					for (var y=0; y<newNames.length; y++) {
-						$('#merge-name-popup select').append('<option>' + newNames[y] + '</option>');
+						// Check one last time to make sure they're not in the muni list.
+						// And check to make sure the name is not just one of the pieces by itself.
+						if ( names.indexOf(newNames[y]) == -1 && allNamePieces.indexOf(newNames[y]) == -1 ) {
+							$('#merge-name-popup select').append('<option>' + newNames[y] + '</option>');
+						}
 					}
 				},
 

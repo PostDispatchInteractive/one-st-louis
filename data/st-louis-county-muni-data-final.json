@@ -15,7 +15,7 @@
   "08236": { "pop-total":8031, "pop-white":7049, "pop-black":223, "pop-asian":658, "pop-other":101, "per-capita-income":43560, "pre":["brent"], "pieces":[], "suf":["wood"], "words":[] },
   "08398": { "pop-total":11661, "pop-white":8324, "pop-black":2381, "pop-asian":285, "pop-other":671, "per-capita-income":25294, "pre":[], "pieces":["bridge"], "suf":["ton"], "words":[] },
   "10612": { "pop-total":1360, "pop-white":853, "pop-black":403, "pop-asian":37, "pop-other":67, "per-capita-income":20786, "pre":[], "pieces":["cal","ver","ton"], "suf":[], "words":[] },
-  "13078": { "pop-total":4, "pop-white":4, "pop-black":0, "pop-asian":0, "pop-other":0, "per-capita-income":17550, "pre":[], "pieces":[], "suf":[], "words":["champ"] },
+  "13078": { "pop-total":4, "pop-white":4, "pop-black":0, "pop-asian":0, "pop-other":0, "per-capita-income":17550, "pre":[], "pieces":["champ"], "suf":[], "words":[] },
   "13330": { "pop-total":1440, "pop-white":748, "pop-black":617, "pop-asian":33, "pop-other":42, "per-capita-income":21571, "pre":[], "pieces":["char","lack"], "suf":[], "words":[] },
   "13600": { "pop-total":47568, "pop-white":40502, "pop-black":1482, "pop-asian":4623, "pop-other":961, "per-capita-income":52024, "pre":[], "pieces":["chester"], "suf":["field"], "words":[] },
   "14176": { "pop-total":2636, "pop-white":2480, "pop-black":45, "pop-asian":68, "pop-other":43, "per-capita-income":75043, "pre":["clark"], "pieces":[], "suf":["son"], "words":["valley"] },
