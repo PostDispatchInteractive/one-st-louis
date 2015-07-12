@@ -13,156 +13,340 @@
     clear: both;
     content: '';
 }
+
+input[type="text"] {
+    display: block;
+    margin: 0;
+    padding: 10px;
+    width: 100%;
+    font-size: 18px;
+    border: solid 5px #c9c9c9;
+    border-radius: none;
+    appearance: none;
+    box-shadow: none;
+    transition: border 0.3s;
+    &:focus {
+        outline: none;
+    }
+    &:focus,
+    &.focus {
+        border: solid 5px #969696;
+    }
+}
+button {
+    display: inline block;
+    font-weight: 900;
+    margin: 25px auto 0px;
+    padding: 10px 15px;
+    font-size: 1rem;
+    line-height: 1rem;
+    appearance: none;
+    box-shadow: none;
+    border-radius: 0;
+    color: #fff;
+    background-color: #0277bd;
+    text-shadow: -1px 1px #015384;
+    border: none;
+    &:focus {
+        outline: none
+    }
+    &:hover {
+        background-color: #025F97;
+        text-shadow: -1px 1px #013C5E;
+    }
+    &:active {
+        background-color: #014771;
+        text-shadow: -1px 1px #012439;
+    }
+    @media (max-width:768px) {
+        padding: 8px 10px;
+        font-size: 1rem;
+        line-height: 1rem;
+    }
+}
+
+
+
+
+
 body {
     font-family: 'Lato', Helvetica, Arial, sans-serif;
     font-weight: 400;
     color: @black;
+    background-color: #f6f6f6;
     text-shadow: 1px 1px 1px rgba(0, 0, 0, .004);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
 
-    #content {
-        max-width: 1024px;
-        margin: 0 auto;
-
-        @media (max-width:900px) {
-            padding: 0 10px;
+    header {
+        margin: 0px;
+        color: @white;
+        background: @black;
+        padding: 1rem;
+        text-align: center;
+        @media (max-width:768px) {
+            padding: 0.75rem;
         }
-        #map-container {
-            float: left;
-            width: 330px;
-            height: 100vh;
-            margin-right: 10px;
-            padding-right: 10px;
-            border-right: 1px solid #bdbdbd;
-
-            .sample {
-                width: 235px;
-
-                .dropdownjs {
-                    position: relative;
-
-                    ul {
-                        width: 235px;
-                        height: 524px;
-                        transform: none;
-                        display: none;
-                        // opacity: 0;
-                        // transition: all .2s ease;
-                    }
-
-                    input.focus ~ ul {
-                        // opacity: 1;
-                        display: block;
-                    }
-
-                    &::after {
-                        position: absolute;
-                        top: 12px;
-                        right: 5px;
-                        width: 0;
-                        height: 0;
-                        content: '';
-                        pointer-events: none;
-                        border-top: 5px solid @black;
-                        border-right: 5px solid transparent;
-                        border-left: 5px solid transparent;
-                        background-color: #fff;
-                    }
-                    .form-control {
-                        font-size: 14px;
-                        font-weight: 400;
-                        display: block;
-                        float: none;
-                        padding: 0 6px;
-                        transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
-                        color: @black;
-                        border: 0;
-                        border-radius: 0;
-                        background-image: linear-gradient(#bdbdbd, #bdbdbd), linear-gradient(#bdbdbd, #bdbdbd);
-                        background-repeat: no-repeat;
-                        background-position: center bottom, center calc(100% - 1px);
-                        background-size: 0 2px, 100% 1px;
-                        box-shadow: none;
-
-                        &:not(textarea) {
-                            height: 28px;
-                        }
-                    }
-                    .form-control[readonly] {
-                        opacity: 1;
-                        border-color: transparent;
-                    }
-                    ul[placement=bottom-left] {
-                        top: 35px;
-                        left: 0;
-                        width: 235px;
-                        height: 525px !important;
-                        transform-origin: top left;
-                        overflow-y: scroll;
-
-                        li {
-                            font-size: 16px;
-                            cursor: pointer;
-                        }
-
-                        li.selected {
-                            background-color: #E0E0E0;
-                        }
-                    }
-                }
-            }
-        }
-        #stats-container {
-            float: left;
-            max-width: 674px;
-            margin-left: 10px;
-            padding-left: 10px;
-
-            h1 {
-                font-size: 72px;
-                font-weight: 900;
-                margin: 15px 0 0;
-
-                @media (max-width:414px) {
-                    font-size: 42px;
-                }
-            }
-            h3 {
-                font-size: 18px;
-                font-weight: 400;
-                margin: 0;
-                text-transform: uppercase;
-                color: #9d9d9d;
-            }
-            p {
-                font-size: 36px;
-                font-weight: 100;
-                margin: 25px 0;
-
-                @media (max-width:414px) {
-                    font-size: 18px;
-                }
-                span {
-                    font-weight: 700;
-                    color: @red;
-                }
-            }
-        }
-        #intro {
-            margin-bottom: 60px;
-
-            @media (max-width:414px) {
-                margin-bottom: 36px;
+        h1 {
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 2rem;
+            line-height: 2rem;
+            margin: 0px;
+            padding: 0px;
+            @media (max-width:768px) {
+                font-size: 1.5rem;
+                line-height: 1.5rem;
             }
         }
     }
+
+    #content {
+        /*max-width: 1024px;*/
+        margin: 0 auto;
+        @media (max-width:768px) {
+            padding: 0 15px;
+        }
+        #map-container {
+            width: 100%;
+            height: 100vh;
+            float: none;
+            border: none;
+            margin: 0px;
+            padding: 0px;
+            position: relative;
+            #interface-wrapper {
+                position: absolute;
+                top: 15px;
+                left: 15px;
+                @media (max-width:768px) {
+                    left: 0;
+                }
+                /* since this wrapper can overlap the map, disable pointer events */
+                pointer-events: none;
+                #control-wrapper {
+                    position: relative;
+                    .controls {
+                        h3 {
+                            margin-top: 0px;
+                            padding-top: 0px;
+                            margin-bottom: 0px;
+                            @media (max-width:768px) {
+                                font-size: 0.8rem;
+                                line-height: 0.8rem;
+                            }
+                        }
+                        button {
+                            margin-top: 15px;
+                            margin-right: 10px;
+                            /* re-enable pointer events since this is a button control */
+                            pointer-events:auto;
+                            @media (max-width:768px) {
+                                margin-top: 10px;
+                                margin-right: 5px;
+                            }
+                        }
+                        button:disabled {
+                            background-color: #B9D6E8;
+                            text-shadow: -1px 1px #B9D6E8;
+                            // opacity: 0.25;
+                            pointer-events:auto;
+                        }
+                    }
+                    .controls.inactive {
+                    }
+                    #map-controls {
+                        position: relative;
+                        display: inline-block;
+                        padding-right: 5px; /* button already has 10px of margin */
+                        margin-right: 15px;
+                        border-right: 1px dotted #aaa;
+                        @media (max-width:768px) {
+                            padding-right: 5px;
+                            margin-right: 5px;
+                        }
+                        #map-selectall {
+                            @media (max-width:768px) {
+                                display: none;
+                            }
+                        }
+                    }
+
+                    #muni-controls {
+                        position: relative;
+                        display: inline-block;
+                    }
+                }
+                #map-stats {
+                    position: relative;
+                    background-color: white;
+                    width: 300px;
+                    min-height: 180px;
+                    border-radius: 10px;
+                    display: block;
+                    padding: 15px;
+                    margin-top: 20px;
+                    z-index: 100;
+                    @media (max-width:768px) {
+                        display: none;
+                    }
+                    h2 {
+                        font-weight: 900;
+                        margin: 0px;
+                        padding-top: 0px;
+                        font-size: 1.5rem;
+                    }
+                    div.stats-big {
+                        font-weight: 200;
+                        font-size: 1.2rem;
+                    }
+                    div.stats-small {
+                        font-weight: 200;
+                        font-size: .9rem;
+                        text-indent: 15px;
+                    }
+                    p {
+                        font-weight: 400;
+                        font-size: .8rem;
+                        margin-bottom: 0px;
+                        padding-bottom: 0px;
+                    }
+                    div.stats-big span {
+                        font-weight: 600;
+                        color: #900;
+                    }
+                    div.stats-small span {
+                        font-weight: 600;
+                        color: black;
+                    }
+                }
+                #map-stats.inactive {
+                    display: none;
+                }
+                #map-message {
+                    position: absolute;
+                    top: 150px;
+                    left: 10px;
+                    width: 300px;
+                    z-index: 0;
+                }
+            }
+
+            #map {
+                width: 100%;
+                height: 100%;
+                .muni {
+                    fill: #ccc;
+                }
+                .muni.uninc {
+                    fill: #d9d9d9;
+                }
+                /* We only want this hover effect on desktop */
+                @media (min-width:768px) {
+                    .muni:hover, .muni.merged:hover {
+                        fill: #999;
+                    }
+                }
+                .muni.merged {
+                    fill: #e3e3e3;
+                    stroke: #fff;
+                }
+                .muni-boundary {
+                    fill: none;
+                    stroke: #fff;
+                }
+                .muni.selected {
+                    fill: orange;
+                    stroke: #000;
+                }
+                .muni.active {
+                    fill: orange;
+                }
+
+            }
+        }
+    }
+    .popup {
+        padding: 25px;
+        background: white;
+        display: none;
+        font-weight: 400;
+        h2 {
+            text-align: center;
+            margin-top: 0px;
+            padding-top: 0px;
+            font-weight: 900;
+        }
+    }
+    #mobile-popup {
+        h2 {
+            text-align: center;
+        }
+        ol {
+            text-align: left;
+        }
+        max-width: 90%;
+        margin: 0px;
+        .mobile {
+            display: none;
+        }
+    }
+    #share-popup {
+        text-align: center;
+        border: 1px solid black;
+
+        h3 {
+            margin-top: 0px;
+        }
+
+        .shareButton {
+            display: inline-block;
+            background: #ccc;
+            color: white;
+            padding: 10px;
+            height: 3rem;
+            width: 3rem;
+            border-radius: 50%;
+            text-align: center;
+            &:hover {
+                background: black;
+            }
+            span {
+                display: none;
+            }
+            i {
+                font-size: 1.5rem;
+                line-height: 1.5rem;
+                padding-top: 3px;
+            }
+        }
+        .shareButton.zeroclipboard-is-hover {
+            background: black;
+        }
+        p {
+            opacity: 0;
+        }
+    }
+    #merge-name-popup {
+        select {
+            display: block;
+            margin: 0;
+            font-size: 18px;
+            appearance: none;
+            box-shadow: none;
+            border-radius: none;
+        }
+    }
+
     footer {
         font-family: 'Lato', Helvetica, Arial, sans-serif;
         font-weight: 400;
-        margin-top: 50px;
+        margin-top: 0px;
         color: @white;
         background: @red;
+        @media (max-width:768px) {
+            display: none;
+        }
 
         .credits {
             width: 92.5%;
@@ -187,7 +371,7 @@ body {
             }
             p {
                 font-size: .8em;
-                margin: 0;
+                margin: 0 0 20px 0;
                 padding: 4px 0;
             }
             p.published {

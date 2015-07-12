@@ -20,13 +20,16 @@
 	zoom, 
 	svg, 
 	map, 
-	selected, 
+	selected = [], 
 	mergedSelected, 
-	merges, 
-	munis, 
-	allPlaceFps,
-	stats,
-	shared;
+	merges = [], 
+	munis = null, 
+	stats = null,
+	allPlaceFps = [],
+	shared,
+	isMobile = false;
+
+
 
 
 	function getUrlParameter( name, url ) {
@@ -39,17 +42,37 @@
 	}
 
 
-	// ####################################
-	// ####################################
-	// ##
-	// ##  JQUERY READY HANDLER 
-	// ## 
-	// ####################################
-	// ####################################
+	function zoomed() {
+		map.style("stroke-width", 1.5 / d3.event.scale + "px");
+		map.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+	}
 
-	jQuery(document).ready(function($) {
-		width = $('#map').width();
-		height = $('#map').height();
+	function calcProjection(data) {
+		// ========================================================
+		// BEGIN: CODE FOR CENTERING THE MAP
+		// adapted from: http://stackoverflow.com/a/14654988/566307
+		// Compute the bounds of a feature of interest, then derive scale & translate.
+		// Note: I moved this code here from the top of buildMap(), so it only runs once.
+		// Things went nuts when I was recalculating whenever buildMap() was called.
+		var b = path.bounds( topojson.feature(data, data.objects.municipalities) ),
+			s = .95 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height),
+			t = [(width - s * (b[1][0] + b[0][0])) / 2, (height - s * (b[1][1] + b[0][1])) / 2];
+
+		// Update the projection to use computed scale & translate.
+		projection
+			.scale(s)
+			.translate(t);
+		// END
+		// ========================================================
+
+		// cleanup
+		data = null;
+	}
+
+	function mapInit() {
+		if (svg) {
+			svg.remove();
+		}
 
 		// ========================================================
 		// BEGIN: CODE FOR CENTERING THE MAP
@@ -64,17 +87,11 @@
 		// END
 		// ========================================================
 
-		function zoomed() {
-		  map.style("stroke-width", 1.5 / d3.event.scale + "px");
-		  map.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-		}
-
 		zoom = d3.behavior.zoom()
 			.translate([0, 0])
 			.scale(1)
 			.scaleExtent([1, 8])
 			.on("zoom", zoomed);
-
 
 		svg = d3.select("#map").append("svg")
 			.attr("width", width)
@@ -87,10 +104,83 @@
 			.call(zoom) // delete this line to disable free zooming
 			.call(zoom.event);
 
-		selected = [];
-		merges = [];
-		allPlaceFps = [];
+		// If we haven't already, then load the map's geopgraphy into D3
+		if (munis == null && stats == null) {
+			d3.json("data/cleaned-30.topojson", function(error, data) {
 
+				// clone and store the data in a global variable so we can access it later
+				munis = jQuery.extend(true, {}, data);
+
+				// Iterate over all munis and store their PlaceFP codes so we can check stuff later
+				for (var i=0; i<munis.objects.municipalities.geometries.length; i++) {
+					allPlaceFps.push( munis.objects.municipalities.geometries[i].properties.placefp );
+				}
+
+				// calculate the map's center
+				calcProjection(data);
+
+				// Load the demographic/income data.
+				// Once loaded, store a copy in global Stats variable, then call the BuildMap function
+				$.when( 
+					$.ajax({
+						url: "data/st-louis-county-muni-data-final.json" ,
+						dataType: "json"
+					}) 
+				).then( 
+					function( data2, textStatus, jqXHR ) {
+						stats = jQuery.extend(true, {}, data2);
+						buildMap(data);
+					}
+				);
+			});
+		}
+		// If we already have the geopgraphy loaded, pass a copy to our map-building functions.
+		else {
+			var muniCopy = jQuery.extend(true, {}, munis);
+			calcProjection(muniCopy);
+			buildMap(muniCopy);
+			// cleanup
+			muniCopy = null;
+		}
+	}
+
+
+	// ####################################
+	// ####################################
+	// ##
+	// ##  JQUERY READY HANDLER 
+	// ## 
+	// ####################################
+	// ####################################
+
+	jQuery(document).ready(function($) {
+		// Store the URL sharing button for use by ZeroClipboard
+		var copyButton = new ZeroClipboard( document.getElementById("shareUr") );
+
+		// ZeroClipboard URL-sharing click handler
+		copyButton.on( "copy", function( event ) {
+			$('#share-popup p').animate({opacity:1});
+		});
+
+		// check for mobile
+		if ( $('#map-selectall').css('display') == 'none' ) {
+			isMobile = true;
+		}
+		width = $('#map').width();
+		height = $('#map').height();
+
+		if (isMobile) {
+			$('#explainer-popup .mobile').show();
+			$('#explainer-popup .desktop').hide();
+		}
+		else {
+			$('#explainer-popup .mobile').hide();
+			$('#explainer-popup .desktop').show();
+		}
+		$('#explainer-popup').bPopup();
+
+		// Load geography, calculate map's dimensions, build map
+		mapInit();
 
 		// Check if there's a map parameter (user clicked a share link)
 		var userMap = getUrlParameter("map");
@@ -113,51 +203,18 @@
 		// It will be turned on when user creates their first merge.
 		$('#map-share').prop("disabled",true);
 
-		// Load the map's geopgraphy into D3
-		d3.json("data/cleaned-30.topojson", function(error, data) {
+		// Hide reset button on load.
+		// It will be turned on when user creates their first merge.
+		$('#map-reset').prop("disabled",true);
 
-			// clone and store the data in a global variable so we can access it later
-			munis = jQuery.extend(true, {}, data);
 
-			// Iterate over all munis and store their PlaceFP codes so we can check stuff later
-			for (var i=0; i<munis.objects.municipalities.geometries.length; i++) {
-				allPlaceFps.push( munis.objects.municipalities.geometries[i].properties.placefp );
-			}
-
-			// ========================================================
-			// BEGIN: CODE FOR CENTERING THE MAP
-			// adapted from: http://stackoverflow.com/a/14654988/566307
-			// Compute the bounds of a feature of interest, then derive scale & translate.
-			// Note: I moved this code here from the top of buildMap(), so it only runs once.
-			// Things went nuts when I was recalculating whenever buildMap() was called.
-			var b = path.bounds( topojson.feature(data, data.objects.municipalities) ),
-				s = .95 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height),
-				t = [(width - s * (b[1][0] + b[0][0])) / 2, (height - s * (b[1][1] + b[0][1])) / 2];
-
-			// Update the projection to use computed scale & translate.
-			projection
-				.scale(s)
-				.translate(t);
-			// END
-			// ========================================================
-
-			// Load the demographic/income data.
-			// Once loaded, store a copy in global Stats variable, then call the BuildMap function
-			$.when( 
-				$.ajax({
-					url: "data/st-louis-county-muni-data-final.json" ,
-					dataType: "json"
-				}) 
-			).then( 
-				function( data2, textStatus, jqXHR ) {
-					stats = jQuery.extend(true, {}, data2);
-					buildMap(data);
-				}
-			);
-
+		// WINDOW RESIZE HANDLER
+		$(window).on('resize', function(){
+			// Get new width and height
+			width = $('#map').width();
+			height = $('#map').height();
+			mapInit();
 		});
-
-
 
 		// MAP CONTROL CLICK HANDLERS
 		// Merge button
@@ -357,7 +414,6 @@
 
 
 					// 2. Compile list of all municipalities to be merged.
-					//    Also, compile new name pieces
 					for (var i=0; i<selected.length; i++) {
 						var thisPlaceFp = selected[i].getAttribute('data-placefp');
 						// 2a. Is this selection element in our AllPlaceFps list? If so, it's a single muni.
@@ -440,19 +496,42 @@
 		// Share button
 		$("#map-share").on("click", function() {
 			if ( merges.length > 0 && shared == false) {
+
 				var mapCode = LZString.compressToEncodedURIComponent( JSON.stringify(merges) );
 				var encShareUrl = 'http://staging.graphics.stltoday.com/apps/one-st-louis/index.html?map=' + mapCode;
 
 				var fbShare = 'https://www.facebook.com/sharer.php?u=' + encShareUrl;
-				var twShare = 'https://twitter.com/intent/tweet?source=tweetbutton&text=I%20just%20built%20a%20new%20St.%20Louis.%20Check%20it%20out%20on%20%40stltoday.%20&url=' + encShareUrl + '&via=stltoday';
+				var twShare = 'https://twitter.com/intent/tweet?source=tweetbutton&text=I%20just%20built%20a%20new%20St.%20Louis.%20&url=' + encShareUrl + '&via=stltoday';
 
 				$('#shareFb').attr('href', fbShare);
 				$('#shareTw').attr('href', twShare);
-				$('#shareUr').attr('href', encShareUrl);
+				// $('#shareUr').attr('href', encShareUrl);
+				$('#shareUr').attr('data-clipboard-text', encShareUrl);
 
-				var bPopup = $('#share-popup').bPopup();
+				var bPopup = $('#share-popup').bPopup({
+					onClose: function() {
+						$('#share-popup p').css({opacity:0});
+					}
+				});
 			}
 		}); // end map-selectall click handler 
+
+
+		// Facebook / Twitter button click handler
+		$('.sharePop').click(function() {
+			var width = 575,
+			height = 253,
+			left = ($(window).width() - width) / 2,
+			top = ($(window).height() - height) / 2,
+			url = this.href,
+			opts = 'status=1' +
+				   ',width=' + width +
+				   ',height=' + height +
+				   ',top=' + top +
+				   ',left=' + left;
+			window.open(url, '_blank', opts);
+			return false;
+		}); // end fb / tw click handler
 
 
 		// This code initiates a D3 click event in jQuery.
@@ -574,10 +653,12 @@
 		// Otherwise, turn on share button if we have merged munis
 		else if (merges.length > 0) {
 			$('#map-share').prop("disabled",false);
+			$('#map-reset').prop("disabled",false);
 		}
 		// Or, if no merged munis, turn share button off.
 		else {
 			$('#map-share').prop("disabled",true);
+			$('#map-reset').prop("disabled",true);
 		}
 
 		// Draw the municipality polygons

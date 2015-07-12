@@ -26,7 +26,8 @@
     <title>One St. Louis</title>
 
     <!-- Behavioral Meta Data -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <meta name="apple-mobile-web-app-capable" content="yes">
 
     <!-- Core Meta Data -->
     <meta name="author" content="St. Louis Post-Dispatch &amp; STLtoday.com">
@@ -88,36 +89,63 @@
 
 <body>
 
-<div id="content" class="container group">
+<header>
     <h1>Build a new St. Louis</h1>
-    <div id="map-container">
-        <div id="control-wrapper">
-            <div id="map-controls" class="controls">
-                <h3>Map</h3>
-                <button id="map-selectall">Select all</button>
-                <button id="map-reset">Reset</button>
-                <button id="map-share">Share</button>
-            </div>
-            <div id="muni-controls" class="controls inactive">
-                <h3>Municipalities</h3>
-                <button id="map-merge" disabled>Merge</button>
-                <button id="map-split" disabled>Split</button>
-            </div>
-            </div>
-        <div id="map-stats" class="inactive">
-            <h2 id="stats-name"><span></span></h2>
-            <div id="stats-population" class="stats-big">Population: <span></span></div>
-            <div id="stats-pct-white" class="stats-small">White: <span></span></div>
-            <div id="stats-pct-black" class="stats-small">Black: <span></span></div>
-            <div id="stats-pct-asian" class="stats-small">Asian: <span></span></div>
-            <div id="stats-pct-other" class="stats-small">Other: <span></span></div>
-            <div id="stats-income" class="stats-big">Per-capita income: <span></span></div>
-            <p><em>Values are <u>estimates</u> derived from the 2009-13 American Community Survey.</em><p>
+</header>
 
+
+<div id="content" class="container group">
+    <div id="map-container">
+        <div id="interface-wrapper">
+            <div id="control-wrapper">
+                <div id="map-controls" class="controls">
+                    <h3>Map</h3>
+                    <button id="map-selectall">Select all</button>
+                    <button id="map-reset" disabled>Reset</button>
+                    <button id="map-share" disabled>Share</button>
+                </div>
+                <div id="muni-controls" class="controls inactive">
+                    <h3>Municipalities</h3>
+                    <button id="map-merge" disabled>Merge</button>
+                    <button id="map-split" disabled>Split</button>
+                </div>
+            </div>
+            <div id="map-stats" class="inactive">
+                <h2 id="stats-name"><span></span></h2>
+                <div id="stats-population" class="stats-big">Population: <span></span></div>
+                <div id="stats-pct-white" class="stats-small">White: <span></span></div>
+                <div id="stats-pct-black" class="stats-small">Black: <span></span></div>
+                <div id="stats-pct-asian" class="stats-small">Asian: <span></span></div>
+                <div id="stats-pct-other" class="stats-small">Other: <span></span></div>
+                <div id="stats-income" class="stats-big">Per-capita income: <span></span></div>
+                <p><em>Values are <u>estimates</u> derived from the 2009-13 American Community Survey.</em><p>
+            </div>
+            <div id="map-message"></div>
         </div>
-        <div id="map-message"></div>
         <div id="map"></div>
     </div>
+
+    <section id="explainer-popup" class="popup">
+        <h2>Build a new St. Louis</h2>
+        <div class="mobile">
+            <ol>
+                <li>Touch a few municipalities</li>
+                <li>Touch the "merge" button to combine them</li>
+                <li>Repeat!</li>
+                <li>Share your new map</li>
+            </ol>
+            <p><strong>Note:</strong> You may want to try this app in a desktop browser, where it's easier to combine tiny municipalities.</p>
+        </div>
+        <div class="desktop">
+            <ol>
+                <li>Hover over municipalities to see details</li>
+                <li>Click municipalities to select them</li>
+                <li>Click the "merge" button to combine them</li>
+                <li>Repeat!</li>
+                <li>Share your new map</li>
+            </ol>
+        </div>
+    </section>
 
     <section id="merge-name-popup" class="popup">
         <h2>Pick a name for your new municipality</h2>
@@ -128,20 +156,20 @@
 
     <section id="share-popup" class="popup">
         <h3>Share your new St. Louis</h3>
-            <a id="shareFb" href="#" target="_blank"><span>Facebook</span><i class="fa fa-facebook"></i></a>
-            <a id="shareTw" href="#" target="_blank"><span>Twitter</span><i class="fa fa-twitter"></i></a>
-            <a id="shareUr" href="#" target="_blank"><span>Link</span><i class="fa fa-link"></i></a>
+            <a class="shareButton sharePop" id="shareFb" href="#" target="_blank"><span>Facebook</span><i class="fa fa-facebook"></i></a>
+            <a class="shareButton sharePop" id="shareTw" href="#" target="_blank"><span>Twitter</span><i class="fa fa-twitter"></i></a>
+            <div class="shareButton"        id="shareUr" data-clipboard-text=""  ><span>Link</span><i class="fa fa-link"></i></div>
+            <p>The link has been copied to your clipboard!</p>
     </section>
-
-
 
 </div>
 
     <footer>
         <div class="credits">
+            <h6>One St. Louis</h6>
+            <p>Read the accompaning editorial, <a href="">Xxxxxxxx xxxxx xxxx</a>, by <a class="email" href="mailto:tmessenger@post-dispatch.com">Tony Messenger</a>.</p>
             <h6>Credits</h6>
-            <p><b>Editing:</b> <a class="email" href="mailto:xxxxxx@post-dispatch.com?subject=Xxxxxx">Xxxx Xxxxxx</a></p>
-            <p><b>Design and Development:</b> <a class="email" href="mailto:jrenaud@post-dispatch.com?subject=Xxxxxx">Josh Renaud</a></p>
+            <p><b>Design and Development:</b> <a class="email" href="mailto:jrenaud@post-dispatch.com">Josh Renaud</a></p>
             <p class="published">Published Xxxxxxx XX, XXXX</p>
         </div>
         <div class="logo">
@@ -155,269 +183,6 @@
         </div>
     </footer>
 
-    <style>
-
-        body {
-          background-color: #f6f6f6;
-        }
-
-        body h1 {
-            font-weight: 800;
-            text-transform: uppercase;
-            font-size: 2rem;
-            line-height: 2rem;
-            margin-bottom: 10px;
-        }
-        body #content #map-container {
-          width: 100%;
-          float: none;
-          border: none;
-          margin: 0px;
-          padding: 0px;
-          position: relative;
-        }
-
-        /* CONTROL STYLES */
-        #control-wrapper {
-            position: absolute;
-            top: 10px;
-            left: 0px;
-        }
-        #map-controls {
-            position: relative;
-            display: inline-block;
-            padding-right: 5px; /* button already has 10px of margin */
-            margin-right: 15px;
-            border-right: 1px dotted #aaa;
-        }
-        #muni-controls {
-            position: relative;
-            display: inline-block;
-        }
-        .controls h3 {
-            margin-top: 0px;
-            padding-top: 0px;
-            margin-bottom: 0px;
-        }
-        .controls button {
-            margin-top: 15px;
-            margin-right: 10px;
-        }
-        .controls.inactive h3 {
-            opacity: 0.25;
-        }
-
-        .controls button:disabled {
-            opacity: 0.25;
-        }
-
-
-        /* MESSAGE STYLES */
-        #map-message {
-            position: absolute;
-            top: 150px;
-            left: 10px;
-            width: 300px;
-            z-index: 0;
-        }
-
-
-        /* STATS BOX STYLES */
-        #map-stats {
-            position: absolute;
-            background-color: white;
-            top: 100px;
-            left: 10px;
-            width: 300px;
-            min-height: 180px;
-            border-radius: 10px;
-            display: block;
-            padding: 0px 15px;
-            z-index: 100;
-        }
-
-        #map-stats h2 {
-            font-weight: 900;
-            margin: 10px 0px;
-            padding-top: 0px;
-            font-size: 1.5rem;
-        }
-
-        #map-stats div.stats-big {
-            font-weight: 200;
-            font-size: 1.2rem;
-        }
-        #map-stats div.stats-small {
-            font-weight: 200;
-            font-size: .9rem;
-            text-indent: 15px;
-        }
-        #map-stats p {
-            font-weight: 400;
-            font-size: .8rem;
-        }
-
-        #map-stats div.stats-big span {
-            font-weight: 600;
-            color: #900;
-        }
-        #map-stats div.stats-small span {
-            font-weight: 600;
-            color: black;
-        }
-
-        #map-stats.inactive {
-            display: none;
-        }
-
-        /* SHARING PANEL */
-        #share-popup {
-            text-align: center;
-            border: 1px solid black;
-        }
-        #share-popup h3 {
-            margin-top: 0px;
-        }
-
-        #share-popup a {
-            display: inline-block;
-            background: #ccc;
-            color: white;
-            padding: 10px;
-            height: 3rem;
-            width: 3rem;
-            border-radius: 50%;
-            text-align: center;
-        }
-
-        #share-popup a:hover {
-            background: black;
-        }
-
-        #share-popup a span {
-            display: none;
-        }
-        #share-popup a i {
-            font-size: 1.5rem;
-            line-height: 1.5rem;
-            padding-top: 3px;
-        }
-
-
-        /* MAP STYLES */
-
-        #map {
-          width: 100%;
-          height: 100%;
-        }
-
-        .muni {
-          fill: #ccc;
-        }
-        .muni.uninc {
-          fill: #d9d9d9;
-        }
-
-        .muni:hover {
-          fill: #999;
-        }
-
-        .muni.merged {
-          stroke: #fff;
-        }
-
-        .muni-boundary {
-          fill: none;
-          stroke: #fff;
-        }
-
-        .muni.selected {
-          fill: orange;
-          stroke: #000;
-        }
-
-        .muni.active {
-          fill: orange;
-        }
-
-        /* FORM STYLES */
-
-        input[type="text"] {
-            display: block;
-            margin: 0;
-            width: 100%;
-            font-size: 18px;
-            appearance: none;
-            box-shadow: none;
-            border-radius: none;
-        }
-        input[type="text"]:focus {
-            outline: none;
-        }
-
-        input[type="text"] {
-            padding: 10px;
-            border: solid 5px #c9c9c9;
-            transition: border 0.3s;
-        }
-        input[type="text"]:focus,
-        input[type="text"].focus {
-            border: solid 5px #969696;
-        }
-
-        #merge-name-popup select {
-            display: block;
-            margin: 0;
-            font-size: 18px;
-            appearance: none;
-            box-shadow: none;
-            border-radius: none;
-        }
-
-
-        .popup {
-            padding: 25px;
-            background: white;
-            display: none;
-            font-weight: 400;
-        }
-        .popup h2 {
-            text-align: center;
-            margin-top: 0px;
-            padding-top: 0px;
-            font-weight: 900;
-        }
-        button {
-            display: inline block;
-            font-weight: 900;
-            margin: 25px auto 0px;
-            padding: 10px 15px;
-            font-size: 1rem;
-            line-height: 1rem;
-            appearance: none;
-            box-shadow: none;
-            border-radius: 0;
-            color: #fff;
-            background-color: #0277bd;
-            text-shadow: -1px 1px #015384;
-            border: none;
-        }
-        button:focus {
-            outline: none
-        }
-        button:hover {
-            background-color: #025F97;
-            text-shadow: -1px 1px #013C5E;
-        }
-        button:active {
-            background-color: #014771;
-            text-shadow: -1px 1px #012439;
-        }
-
-
-
-
-    </style>
 
 
     <!-- Javascript -->
@@ -425,9 +190,11 @@
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="http://d3js.org/topojson.v1.min.js"></script>
     <script src="http://staging.graphics.stltoday.com/apps/one-st-louis/js/jquery.bpopup-0.11.0.min.js"></script>
-    <script src="js/lz-string.min.js"></script>
+    <script src="http://staging.graphics.stltoday.com/apps/one-st-louis/js/ZeroClipboard.min.js"></script>
+    <script>ZeroClipboard.config( { swfPath: "http://staging.graphics.stltoday.com/apps/one-st-louis/js/ZeroClipboard.swf" } );</script>
+    <script src="js/jsonpack.main.min.js"></script>
+    <script src="http://staging.graphics.stltoday.com/apps/one-st-louis/js/lz-string.min.js"></script>
     <script src="js/main.js"></script>
-
 
 
 </body>
