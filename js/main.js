@@ -29,6 +29,16 @@
 	shared,
 	isMobile = false;
 
+	// Generate a RFC4122-compliant UUID
+	function generateUUID() {
+		var d = new Date().getTime();
+		var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+			var r = (d + Math.random()*16)%16 | 0;
+			d = Math.floor(d/16);
+			return (c=='x' ? r : (r&0x3|0x8)).toString(16);
+		});
+		return uuid;
+	}
 
 
 
@@ -104,7 +114,7 @@
 			.call(zoom) // delete this line to disable free zooming
 			.call(zoom.event);
 
-		// If we haven't already, then load the map's geopgraphy into D3
+		// If we haven't already, then load the map's geography into D3
 		if (munis == null && stats == null) {
 			d3.json("data/cleaned-30.topojson", function(error, data) {
 
@@ -154,46 +164,78 @@
 	// ####################################
 
 	jQuery(document).ready(function($) {
-		// Store the URL sharing button for use by ZeroClipboard
-		var copyButton = new ZeroClipboard( document.getElementById("shareUr") );
-
-		// ZeroClipboard URL-sharing click handler
-		copyButton.on( "copy", function( event ) {
-			$('#share-popup p').animate({opacity:1});
-		});
-
 		// check for mobile
 		if ( $('#map-selectall').css('display') == 'none' ) {
 			isMobile = true;
 		}
+
+		// set up zero clipboard on desktop
+		if (!isMobile) {
+			// Store the URL sharing button for use by ZeroClipboard
+			var copyButton = new ZeroClipboard( document.getElementById("shareUr") );
+
+			// ZeroClipboard URL-sharing click handler
+			copyButton.on( "copy", function( event ) {
+				$('#share-popup p').animate({opacity:1});
+			});
+		}
+		// Change the URL widget to a link on mobile, since zeroclipboard doesn't work on mobile
+		else {
+			$('#shareUr').replaceWith('<a class="shareButton sharePop" id="shareUr" href="#" target="_blank"><span>Link</span><i class="fa fa-link"></i></a>');
+		}
+
 		width = $('#map').width();
 		height = $('#map').height();
 
+
+		// bpopup shows up too high on iphone. Not sure why.
 		if (isMobile) {
-			$('#explainer-popup .mobile').show();
-			$('#explainer-popup .desktop').hide();
+			var position = ['auto',80];
 		}
 		else {
-			$('#explainer-popup .mobile').hide();
-			$('#explainer-popup .desktop').show();
+			var position = ['auto','auto'];
 		}
-		$('#explainer-popup').bPopup();
+
+		var explainer = $('#explainer-popup').bPopup({
+			position: position,
+			onOpen: function() {
+				window.scroll(0, 0);
+			},
+			onClose: function() {
+				window.scroll(0, 0);
+			}
+		});
+		// close if they click or touch the modal
+		$('#explainer-popup').on('click', function(){
+			explainer.close();
+		});
+
 
 		// Load geography, calculate map's dimensions, build map
 		mapInit();
 
 		// Check if there's a map parameter (user clicked a share link)
-		var userMap = getUrlParameter("map");
-		if (userMap) {
-			try {
-				merges = JSON.parse( LZString.decompressFromEncodedURIComponent( userMap ) );
-				shared = true;
-			} 
-			catch(e){
-				// error-handling would go here. For now, I'm just going to reset merges to an empty array.
+		var userId = getUrlParameter("id");
+		if (userId) {
+			var query = JSON.stringify({id:userId});
+			// Send user ID to OpenWS. Retrieve the user's saved mergesets and store them in merges array.
+			$.get("https://openws.herokuapp.com/new-st-louis?q="+query+"&apiKey=7392f58173720e6bd8292b615b708801")
+			.done(function(data) {
+				if ( data[0] !== "undefined" && data[0]['merges'] !== "undefined" ) {
+					merges = data[0]['merges'];
+					shared = true;
+				}
+				else {
+					merges = [];
+					shared = false
+				}
+
+			})
+			.fail(function(data) {
 				merges = [];
 				shared = false
-			}
+			});
+
 		}
 		else {
 			shared = false;
@@ -219,6 +261,11 @@
 		// MAP CONTROL CLICK HANDLERS
 		// Merge button
 		$("#map-merge").on("click", function() {
+			// close map-stats on mobile
+			if (isMobile) {
+				resetStats();
+				$('#map-stats').addClass('inactive');
+			}
 			// Pop up box to ask user to name their new merged muni
 			var bPopup = $('#merge-name-popup').bPopup({
 				// ===========================
@@ -229,6 +276,8 @@
 				// When we open the dialog, we need to generate possible names for the merged muni
 				// and add them to the form. 
 				onOpen: function() {
+					// Make sure we stay at the top of the window always.
+					window.scroll(0, 0);
 					namePieces = {
 						"pre":[],
 						"pieces":[],
@@ -302,7 +351,7 @@
 					var piecesWeight = 0.3;
 					var sufWeight = 0.2;
 					var wordsWeight1 = 0.5;
-					var wordsWeight2 = 0.8;
+					var wordsWeight2 = 0.9;
 
 					// If there aren't words, then make it more likely prefix, suffix, pieces won't be skipped
 					if ( namePieces["words"].length < 1 ) {
@@ -329,7 +378,7 @@
 						var numCalls = 0;
 						do {
 							numCalls++;
-							if (numCalls > 20) { break; }
+							if (numCalls > 30) { break; }
 
 							var name = '';
 							if (namePieces["pre"].length > 0 && (Math.random() > preWeight) ) {
@@ -397,6 +446,7 @@
 
 				// After they submit the form 
 				onClose: function() {
+					window.scroll(0, 0);
 					// Store user's submitted name
 					var newName = $('#merge-name-popup option:selected').text();
 					// If they didn't submit anything, use generic label
@@ -470,6 +520,11 @@
 
 		// Split button
 		$("#map-split").on("click", function() {
+			// close map-stats on mobile
+			if (isMobile) {
+				resetStats();
+				$('#map-stats').addClass('inactive');
+			}
 			// Iterate over selection and find any mergesets
 			for (var i=0; i<selected.length; i++) {
 				var thisPlaceFp = selected[i].getAttribute('data-placefp');
@@ -497,22 +552,47 @@
 		$("#map-share").on("click", function() {
 			if ( merges.length > 0 && shared == false) {
 
-				var mapCode = LZString.compressToEncodedURIComponent( JSON.stringify(merges) );
-				var encShareUrl = 'http://staging.graphics.stltoday.com/apps/one-st-louis/index.html?map=' + mapCode;
+				var encShareUrl = 'http://staging.graphics.stltoday.com/apps/one-st-louis/index.html';
+				var fbShare = 'https://www.facebook.com/sharer.php?u=';
+				var twShare = 'https://twitter.com/intent/tweet?source=tweetbutton&text=I%20just%20built%20a%20new%20St.%20Louis.%20&url=';
 
-				var fbShare = 'https://www.facebook.com/sharer.php?u=' + encShareUrl;
-				var twShare = 'https://twitter.com/intent/tweet?source=tweetbutton&text=I%20just%20built%20a%20new%20St.%20Louis.%20&url=' + encShareUrl + '&via=stltoday';
+				var mergesToWrite = {};
+				mergesToWrite['merges'] = merges;
 
-				$('#shareFb').attr('href', fbShare);
-				$('#shareTw').attr('href', twShare);
-				// $('#shareUr').attr('href', encShareUrl);
-				$('#shareUr').attr('data-clipboard-text', encShareUrl);
+				// generate a uuid client-side to keep things snappy.
+				mergesToWrite['id'] = generateUUID();
 
-				var bPopup = $('#share-popup').bPopup({
-					onClose: function() {
-						$('#share-popup p').css({opacity:0});
+				// Send the JSON to our datastore
+				$.post("https://openws.herokuapp.com/new-st-louis?apiKey=7392f58173720e6bd8292b615b708801", mergesToWrite)
+				// If post succeeeds, append the json blob's ID to the share URL
+				.done(function(data) {
+					encShareUrl = encShareUrl + '?id=' + mergesToWrite['id'];
+				})
+				// If post fails, do nothing. We'll just share a straight link to the interactive.
+				.fail(function(data) {
+					// console.log("ERROR" + data);
+				})
+				// This is the rest of the code for generating the share popup, executed after we've succeeded or failed.
+				.always(function(data) {
+					fbShare = fbShare + encShareUrl;
+					twShare = twShare + encShareUrl + '&via=stltoday';
+					$('#shareFb').attr('href', fbShare);
+					$('#shareTw').attr('href', twShare);
+					if (isMobile) {
+						$('#shareUr').attr('href', encShareUrl);
 					}
+					else {
+						$('#shareUr').attr('data-clipboard-text', encShareUrl);
+					}
+					var bPopup = $('#share-popup').bPopup({
+						onClose: function() {
+							window.scroll(0, 0);
+							$('#share-popup p').css({opacity:0});
+						}
+					});
 				});
+
+
 			}
 		}); // end map-selectall click handler 
 
@@ -540,13 +620,17 @@
 			this.each(function (i, e) {
 				var evt = document.createEvent("MouseEvents");
 				evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-
 				e.dispatchEvent(evt);
 			});
 		};
 
 		// Select All button
 		$("#map-selectall").on("click", function() {
+			// close map-stats on mobile
+			if (isMobile) {
+				resetStats();
+				$('#map-stats').addClass('inactive');
+			}
 			// empty the selected array
 			selected.length = 0; 
 			// map.selectAll("path.muni:not(.merged):not(.uninc)").each( function(d) {
@@ -554,12 +638,16 @@
 				$(this).d3Click();
 			});
 
-
 		}); // end map-selectall click handler 
 
 
 		// Reset button
 		$("#map-reset").on("click", function() {
+			// close map-stats on mobile
+			if (isMobile) {
+				resetStats();
+				$('#map-stats').addClass('inactive');
+			}
 			resetMessage();
 			resetControls();
 			selected.length = 0; // empty the selected array
@@ -643,12 +731,12 @@
 					dataCopy.objects.municipalities.geometries.splice(i,1)
 				}
 			}
-
 		}
 
 		// Draw share message if user clicked a share link to get here
 		if (merges.length > 0 && shared == true) {
-			$('#map-message').html('Your friend created a new St. Louis. <br/>Click "reset" to start making your own!');
+			$('#map-message').html('This is a map created by someone else. <br/>Click "reset" to make your own!');
+			$('#map-reset').prop("disabled",false);
 		}
 		// Otherwise, turn on share button if we have merged munis
 		else if (merges.length > 0) {
@@ -753,40 +841,34 @@
 			.attr("d", path);
 
 
-		// Display municipality's info
-		var timer;
+		// Only create hover events on desktop
+		if (!isMobile) {
+			// Display municipality's info
+			var timer;
+			// OnMouseEnter handler
+			$('path.muni').on("mouseenter", function() {
+				// if we immediately re-enter, cancel the timer so the stats box
+				// doesn't get 'inactive' class. This avoids flickering effect.
+				clearTimeout(timer);
+		
+				// Empty out the spans which contain data
+				resetStats();
+				// Populate the spans with this specific muni's data
+				displayStats(this);
+			});
 
-		// OnMouseEnter handler
-		$('path.muni').on("mouseenter", function() {
-			// if we immediately re-enter, cancel the timer so the stats box
-			// doesn't get 'inactive' class. This avoids flickering effect.
-			clearTimeout(timer);
-	
-			// Empty out the spans which contain data
-			resetStats();
-			// Populate the spans with this specific muni's data
-			$("#stats-name span").text( $(this).attr("data-name") );
-			$("#stats-population span").text( $(this).attr("data-population") );
-			$("#stats-pct-white span").text( $(this).attr("data-pct-white") );
-			$("#stats-pct-black span").text( $(this).attr("data-pct-black") );
-			$("#stats-pct-asian span").text( $(this).attr("data-pct-asian") );
-			$("#stats-pct-other span").text( $(this).attr("data-pct-other") );
-			$("#stats-income span").text( $(this).attr("data-income") );
-			$('#map-stats').removeClass('inactive');
-		});
-
-		// OnMouseLeave handler
-		$('path.muni').on("mouseleave", function() {
-			// Empty out the spans which contain data
-			resetStats();
-			// Add an inactive class to hide the stats box. We're using timeout
-			// to slightly delay this. If the user mouses over another muni
-			// then we will cancel the hiding, in order to avoid flicker.
-			timer = setTimeout(function() {
-				$('#map-stats').addClass('inactive');
-			}, 50);
-		});
-
+			// OnMouseLeave handler
+			$('path.muni').on("mouseleave", function() {
+				// Empty out the spans which contain data
+				resetStats();
+				// Add an inactive class to hide the stats box. We're using timeout
+				// to slightly delay this. If the user mouses over another muni
+				// then we will cancel the hiding, in order to avoid flicker.
+				timer = setTimeout(function() {
+					$('#map-stats').addClass('inactive');
+				}, 50);
+			});
+		}
 	}
 
 
@@ -837,19 +919,32 @@
 					$("#map-split").prop("disabled",false);
 				}
 			}
+			// If one or munis selected AND this is mobile, then show the info panel
+			if (isMobile) {
+				resetStats();
+				displayStats(this);
+			}
 		}
 		// If no munis are selected, disable the control panel
 		else {
 			resetControls();
+			// If NO munis selected AND this is mobile, then hide the info panel
+			if (isMobile) {
+				resetStats();
+				$('#map-stats').addClass('inactive');
+			}
 		}
 
 		resetSelections();
 
-		// I'm running selectAll on a clone of select, rather than on select itself.
-		// The reason is that d3 seems to pollute the select array with a "parentNode: false"
+		// I'm running selectAll on a clone of selected, rather than on selected itself.
+		// The reason is that d3 seems to pollute the selected array with a "parentNode: false"
 		// element. I don't understand how/why this gets added, but I figured better to
 		// avoid it creeping into the select array itself.
+		console.log('There was a click');
+		console.log('SELECTED: ' + selected);
 		var selectedCopy = selected.slice(0);
+		console.log('SELECTEDCOPY: ' + selectedCopy);
 		d3.selectAll(selectedCopy).classed("active", true);
 	}
 
@@ -873,6 +968,18 @@
 		$('#map-stats').children('div span').each(function(){
 			$(this).empty();
 		});
+	}
+
+	function displayStats(d) {
+		// Populate the spans with this specific muni's data
+		$("#stats-name span").text( $(d).attr("data-name") );
+		$("#stats-population span").text( $(d).attr("data-population") );
+		$("#stats-pct-white span").text( $(d).attr("data-pct-white") );
+		$("#stats-pct-black span").text( $(d).attr("data-pct-black") );
+		$("#stats-pct-asian span").text( $(d).attr("data-pct-asian") );
+		$("#stats-pct-other span").text( $(d).attr("data-pct-other") );
+		$("#stats-income span").text( $(d).attr("data-income") );
+		$('#map-stats').removeClass('inactive');
 	}
 
 
