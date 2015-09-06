@@ -27,7 +27,17 @@
 	stats = null,
 	allPlaceFps = [],
 	shared,
-	isMobile = false;
+	isMobile = false,
+	userAgent = null,
+	platform = null;
+	if (navigator.userAgent !== "undefined") {
+		userAgent = navigator.userAgent;
+	}
+	if (navigator.platform !== "undefined") {
+		userAgent = navigator.platform;
+	}
+
+
 
 	// Generate a RFC4122-compliant UUID
 	function generateUUID() {
@@ -39,7 +49,6 @@
 		});
 		return uuid;
 	}
-
 
 
 	function getUrlParameter( name, url ) {
@@ -169,15 +178,33 @@
 			isMobile = true;
 		}
 
-		// set up zero clipboard on desktop
-		if (!isMobile) {
-			// Store the URL sharing button for use by ZeroClipboard
-			var copyButton = new ZeroClipboard( document.getElementById("shareUr") );
+		// check for ie
+		if ( $('html').hasClass('ie') ) {
+			$('#control-wrapper').empty();
+			$('.popup').remove();
+			$('#map-message').html('<p>Uh oh. It looks like your browser can not run our "Build a New St. Louis" app. <a href="http://browsehappy.com/">Please upgrade your browser.</a></p>').show();
+			$('#map-message')
+				.css('position','relative')
+				.css('left','auto')
+				.css('margin-left','auto')
+				.css('margin-right','auto')
+				.css('text-align','center');
+			throw new Error("Error: This app requires a newer browser.");
+		}
 
-			// ZeroClipboard URL-sharing click handler
-			copyButton.on( "copy", function( event ) {
-				$('#share-popup p').animate({opacity:1});
-			});
+
+		// set up zero clipboard on desktop  
+		if (!isMobile) {
+			// only run this code if zeroclipboard actually loaded
+			if ('ZeroClipboard' in window) {
+				// Store the URL sharing button for use by ZeroClipboard
+				var copyButton = new ZeroClipboard( document.getElementById("shareUr") );
+
+				// ZeroClipboard URL-sharing click handler
+				copyButton.on( "copy", function( event ) {
+					$('#share-popup p').animate({opacity:1});
+				});
+			}
 		}
 		// Change the URL widget to a link on mobile, since zeroclipboard doesn't work on mobile
 		else {
@@ -228,12 +255,32 @@
 				else {
 					merges = [];
 					shared = false
+					// log this since some of the data was undefined
+					var error = {
+						interactive: "build-a-new-st-louis",
+						transaction: "get",
+						data: data,
+						userAgent: userAgent,
+						platform: platform 
+					};
+					$.post("https://openws.herokuapp.com/errors?apiKey=7392f58173720e6bd8292b615b708801", error);
+
 				}
 
 			})
+			// log error if get fails
 			.fail(function(data) {
 				merges = [];
 				shared = false
+				var error = {
+					interactive: "build-a-new-st-louis",
+					transaction: "get",
+					data: data,
+					userAgent: userAgent,
+					platform: platform 
+				};
+				$.post("https://openws.herokuapp.com/errors?apiKey=7392f58173720e6bd8292b615b708801", error);
+
 			});
 
 		}
@@ -248,6 +295,9 @@
 		// Hide reset button on load.
 		// It will be turned on when user creates their first merge.
 		$('#map-reset').prop("disabled",true);
+
+		// remove animations from Reset button
+		$('#map-reset').removeClass('animated').removeClass('bounce');
 
 
 		// WINDOW RESIZE HANDLER
@@ -552,9 +602,9 @@
 		$("#map-share").on("click", function() {
 			if ( merges.length > 0 && shared == false) {
 
-				var encShareUrl = 'http://staging.graphics.stltoday.com/apps/one-st-louis/index.html';
+				var encShareUrl = 'http://graphics.stltoday.com/apps/build-a-new-st-louis/index.html';
 				var fbShare = 'https://www.facebook.com/sharer.php?u=';
-				var twShare = 'https://twitter.com/intent/tweet?source=tweetbutton&text=I%20just%20built%20a%20new%20St.%20Louis.%20&url=';
+				var twShare = 'https://twitter.com/intent/tweet?source=tweetbutton&text=I%20just%20built%20a%20new%20St.%20Louis.&20&hashtags=onestl&url=';
 
 				var mergesToWrite = {};
 				mergesToWrite['merges'] = merges;
@@ -568,9 +618,17 @@
 				.done(function(data) {
 					encShareUrl = encShareUrl + '?id=' + mergesToWrite['id'];
 				})
-				// If post fails, do nothing. We'll just share a straight link to the interactive.
+				// If post fails, log the error. We'll just share a straight link to the interactive.
 				.fail(function(data) {
-					// console.log("ERROR" + data);
+					// try to send basic error information to our database
+					var error = {
+						interactive: "build-a-new-st-louis",
+						transaction: "post",
+						data: data,
+						userAgent: userAgent,
+						platform: platform 
+					};
+					$.post("https://openws.herokuapp.com/errors?apiKey=7392f58173720e6bd8292b615b708801", error);
 				})
 				// This is the rest of the code for generating the share popup, executed after we've succeeded or failed.
 				.always(function(data) {
@@ -737,6 +795,8 @@
 		if (merges.length > 0 && shared == true) {
 			$('#map-message').html('This is a map created by someone else. <br/>Click "reset" to make your own!');
 			$('#map-reset').prop("disabled",false);
+			// Also, make the reset button bounce to attract attention.
+			$('#map-reset').addClass('animated').addClass('bounce');
 		}
 		// Otherwise, turn on share button if we have merged munis
 		else if (merges.length > 0) {
@@ -957,6 +1017,8 @@
 		$("#muni-controls").addClass("inactive");
 		$("#map-merge").prop("disabled",true);
 		$("#map-split").prop("disabled",true);
+		// remove animations from Reset button
+		$('#map-reset').removeClass('animated').removeClass('bounce');
 	}
 
 	function resetMessage() {

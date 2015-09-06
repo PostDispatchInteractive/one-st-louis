@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
 <!--
 =========================================================================================================================
@@ -22,8 +23,9 @@
 
 <head>
 	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-	<title>One St. Louis</title>
+	<title>Build a New St. Louis | stltoday.com</title>
 
 	<!-- Behavioral Meta Data -->
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
@@ -31,15 +33,15 @@
 
 	<!-- Core Meta Data -->
 	<meta name="author" content="St. Louis Post-Dispatch &amp; STLtoday.com">
-	<meta name="description" content="Xxxxxx xxx xxxxx xx xxxx x xxxxxxx xxxxx xx xxxxx x xxx xxx xxxxxxx xxxxxxx xx x xxxxx. Xxxxxx xxx xxxxx xx xxxx x xxxxxxx xxxxx xx xxxxx x xxx xxx xxxxxxx xxxxxxx xx x xxxxx. Xxxxxx xxx xxxxx xx xxxx x xxxxxxx xxxxx xx xxxxx x xxx xxx xxxxxxx xxxxxxx xx x xxxxx.">
-	<meta name="keywords" content="St. Louis, STL, Saint Louis, St Louis, Missouri, MO, St. Louis Post-Dispatch, stltoday, www.stltoday.com, @stltoday, Chris Spurlock">
+	<meta name="description" content="Build a new St. Louis by combining cities and towns on our interactive map.">
+	<meta name="keywords" content="St. Louis, STL, St Louis, Saint Louis, Ferguson, Missouri, MO, Post-Dispatch, St. Louis Post-Dispatch, stltoday, www.stltoday.com, Josh Renaud">
 
 	<!-- Open Graph Meta Data -->
-	<meta property="og:title" content="Xxxxxx xxx xxxxx xx xxxx x xxxxxxx" />
-	<meta property="og:url" content="http://graphics.stltoday.com/xxxxxx/index.html?v=1">
+	<meta property="og:title" content="Build a New St. Louis" />
+	<meta property="og:url" content="http://graphics.stltoday.com/apps/build-a-new-st-louis/index.html?v=1">
 	<meta property="og:type" content="article" />
-	<meta property="og:description" content="Xxxxxx xxx xxxxx xx xxxx x xxxxxxx xxxxx xx xxxxx x xxx xxx xxxxxxx xxxxxxx xx x xxxxx. Xxxxxx xxx xxxxx xx xxxx x xxxxxxx xxxxx xx xxxxx x xxx xxx xxxxxxx xxxxxxx xx x xxxxx. Xxxxxx xxx xxxxx xx xxxx x xxxxxxx xxxxx xx xxxxx x xxx xxx xxxxxxx xxxxxxx xx x xxxxx." />
-	<meta property="og:image" content="http://graphics.stltoday.com/xxxxxx/img/fb_share.jpg">
+	<meta property="og:description" content="Build a new St. Louis by combining cities and towns on our interactive map." />
+	<meta property="og:image" content="http://graphics.stltoday.com/apps/build-a-new-st-louis/img/share_fb.jpg">
 	<meta property="og:site_name" content="stltoday.com" />
 	<meta property="article:publisher" content="https://www.facebook.com/STLPD" />
 	<meta property="fb:app_id" content="205112096200104" />
@@ -48,9 +50,9 @@
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@stltoday">
 	<meta name="twitter:creator" content="@stltoday">
-	<meta name="twitter:title" content="Xxxxxx xxx xxxxx xx xxxx x xxxxxxx">
-	<meta name="twitter:description" content="Xxxxxx xxx xxxxx xx xxxx x xxxxxxx xxxxx xx xxxxx x xxx xxx xxxxxxx xxxxxxx xx x xxxxx. Xxxxxx xxx xxxxx xx xxxx x xxxxxxx xxxxx xx xxxxx x xxx xxx xxxxxxx xxxxxxx xx x xxxxx. Xxxxxx xxx xxxxx xx xxxx x xxxxxxx xxxxx xx xxxxx x xxx xxx xxxxxxx xxxxxxx xx x xxxxx.">
-	<meta name="twitter:image:src" content="http://graphics.stltoday.com/xxxxxx/img/fb_share.jpg">
+	<meta name="twitter:title" content="Build a New St. Louis">
+	<meta name="twitter:description" content="Build a new St. Louis by combining cities and towns on our interactive map.">
+	<meta name="twitter:image:src" content="http://graphics.stltoday.com/apps/build-a-new-st-louis/img/share_fb.jpg">
 
 	<!-- Favicon -->
 	<link rel="apple-touch-icon" sizes="57x57" href="img/favicons/apple-touch-icon-57x57.png">
@@ -73,10 +75,12 @@
 
 	<!--[if lt IE 9]>
 		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/es5-shim/4.1.11/es5-shim.min.js"></script>
+		<script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
 	<![endif]-->
 
 	<!-- Fonts -->
-	<link href='http://fonts.googleapis.com/css?family=Lato:300,400,700,900' rel='stylesheet' type='text/css'>
+	<link href="http://fonts.googleapis.com/css?family=Lato:300,400,700,900" rel="stylesheet" type="text/css">
 
 	<!-- Styles -->
 	<link rel="stylesheet" href="http://cdn.jsdelivr.net/normalize/3.0.2/normalize.min.css">
@@ -84,6 +88,53 @@
 	<!-- Master stylesheet -->
 	<link rel="stylesheet" type="text/css" href="css/main.css?123" />
 	<link href="http://netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+
+<!-- Google Tag Manager -->
+    <script>
+    function dataHashParam(parm) {
+        var re = new RegExp("#.*[?&]" + parm + "=([^&]+)(&|$)");
+        var match = location.href.match(re);
+        return match ? match[1] : '';
+    }
+    var dataLayer = [{
+        'ga_ua': 'UA-54716522-2',
+        'ga_ua_local': 'UA-26472327-1',
+        'comscore': '2',
+        'comscore_2': '9794746',
+        'quantcast': 'p-700bcf3-jPMko',
+        'quantcast_2': 'p-7dva0PeWUMPrA',
+        'gravity': '8e869b3a021a8bf8e030fa6bc6ebd3d6',
+        'adroll_adv': 'OISRCTP2N5CE5GW2ESJAH6',
+        'adroll_pix': 'ZBBF4EWMKBEQDBWNF5BNZC',
+        'blox_domain': 'stltoday.com',
+        'blox_platform': 'desktop',
+        'blox_skin': 'lee-news',
+        'blox_application': 'graphics',
+        'blox_sections': 'news,opinion,buildstl',
+        'taxonomy_1': 'news',
+        'taxonomy_2': 'opinion',
+        'taxonomy_3': 'buildstl',
+        'taxonomy_4': '',
+        'taxonomy_5': '',
+        'content_group': '1',
+        'content_group_id': 'News',
+        'utm_label': dataHashParam('utm_label'),
+    }];
+    </script>
+    <noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-TDWDC2" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f); })(window,document,'script','dataLayer','GTM-TDWDC2');</script>
+    <script>
+    function ga_track( id, url, type, path, title, byline )
+    {
+        var url = url.replace(/^.*\/\/[^\/]+/, '');
+        dataLayer.push({
+            'event': 'VirtualPageview',
+            'virtualPageURL': url,
+            'virtualPageTitle': title
+        });
+    }</script>
+    <!-- End Google Tag Manager -->
+
 
 </head>
 
@@ -164,11 +215,12 @@
 
 	<footer>
 		<div class="credits">
-			<h6>One St. Louis</h6>
-			<p>Read the accompaning editorial, <a href="">Xxxxxxxx xxxxx xxxx</a>, by <a class="email" href="mailto:tmessenger@post-dispatch.com">Tony Messenger</a>.</p>
+			<h6>Build a New St. Louis</h6>
+			<p>Read the editorial &ndash; <a href="http://www.stltoday.com/news/opinion/columns/the-platform/editorial-build-a-new-st-louis-start-over-to-make/article_c8a46e98-f66c-5777-a13a-06cd305ea20a.html"><em><u>Time to build a new St. Louis: What would it look like if we started over?</u></em></a></p>
 			<h6>Credits</h6>
+			<p><b>Editing:</b> <a class="email" href="mailto:tmessenger@post-dispatch.com">Tony Messenger</a></p>
 			<p><b>Design and Development:</b> <a class="email" href="mailto:jrenaud@post-dispatch.com">Josh Renaud</a></p>
-			<p class="published">Published Xxxxxxx XX, XXXX</p>
+			<p class="published">Published Sept. 6, 2015</p>
 		</div>
 		<div class="logo">
 			<a href="http://www.stltoday.com" data-action="Click Logo"><img src="img/banner.png" alt="Post-Dispatch Logo">
@@ -188,16 +240,14 @@
 	<script src="http://d3js.org/d3.v3.min.js"></script>
 	<script src="http://d3js.org/topojson.v1.min.js"></script>
 	<script src="js/jquery.bpopup-0.11.0.min.js"></script>
+	<!--[if gte IE 9]><!-->
 	<script src="js/ZeroClipboard.min.js"></script>
 	<script>ZeroClipboard.config( { swfPath: "js/ZeroClipboard.swf" } );</script>
-	<!--<script src="js/jsonpack.main.min.js"></script>
-	<script src="http://staging.graphics.stltoday.com/apps/one-st-louis/js/lz-string.min.js"></script>-->
-	<script src="js/main.js"></script>
+	<!--<![endif]-->
+	<script src="js/main-min.js"></script>
 
 
 </body>
-
-
 </html>
 
 
