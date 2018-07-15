@@ -602,7 +602,7 @@
 		$("#map-share").on("click", function() {
 			if ( merges.length > 0 && shared == false) {
 
-				var encShareUrl = 'http://graphics.stltoday.com/apps/build-a-new-st-louis/index.html';
+				var encShareUrl = 'https://graphics.stltoday.com/apps/build-a-new-st-louis/index.html';
 				var fbShare = 'https://www.facebook.com/sharer.php?u=';
 				var twShare = 'https://twitter.com/intent/tweet?source=tweetbutton&text=I%20just%20built%20a%20new%20St.%20Louis.&20&hashtags=onestl&url=';
 
